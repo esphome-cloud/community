@@ -1,0 +1,30 @@
+# yamllint config tuned for GitHub Actions workflows.
+# Keep this minimal — defaults are too strict for action files (line lengths,
+# truthy `on:` block, no-document-start). The goal: catch real YAML errors,
+# allow GH-Actions idioms.
+
+extends: default
+
+rules:
+  # GitHub Actions uses `on:` as a top-level key; yamllint sees "on" as a
+  # truthy value (Norway problem). Disable the truthy check.
+  truthy:
+    check-keys: false
+
+  # Action workflows commonly have long single-line `run:` commands; allow.
+  line-length:
+    max: 200
+    level: warning
+
+  # No need for `---` at the top of every workflow file.
+  document-start: disable
+
+  # Action `run: |` multi-line bodies don't need consistent indentation
+  # validated by yamllint — actions/runner handles them.
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+
+  # Comments without leading space are fine in heredoc-style YAML.
+  comments:
+    min-spaces-from-content: 1

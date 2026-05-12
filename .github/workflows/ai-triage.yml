@@ -1,0 +1,41 @@
+name: AI Triage
+
+# V-ADR-001 / V-ADR-003 / V-PHASE-02 forbidden-behavior:
+# .on MUST have exactly two keys: `issues` and `discussion`.
+# NEVER add `push`, `pull_request`, `workflow_dispatch`, or `schedule` here
+# without a paired ADR re-evaluation — every extra trigger multiplies
+# Claude API cost and creates a non-issue surface for AI traffic.
+# tests/repo/yamllint_workflows.sh enforces `.on | keys == [issues, discussion]`.
+
+on:
+  issues:
+    types: [opened, edited]
+  discussion:
+    types: [created]
+
+# Task 0.3 is a scaffold; the no-op step needs no write permissions.
+# Task 0.4 will broaden to: issues: write, discussions: write, contents: read
+# when triage.py actually labels/comments/closes.
+permissions:
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    # 90s p95 budget per Task 0.3 acceptance "Function" criterion;
+    # 5-min ceiling because cold ubuntu-latest can hit the budget tightly.
+    # Trimmed in Task 0.4 once triage.py is real.
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Smoke marker: this step's name "python ok" is what the Task 0.3
+      # acceptance grep matches via `gh run view --log`. The Python
+      # command itself just prints "ok"; the step name carries the marker.
+      - name: python ok
+        run: python -c "print('ok')"
