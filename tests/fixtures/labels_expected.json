@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-13",
+  "source_of_truth": "tests/fixtures/labels_expected.json",
+  "breakdown": {
+    "ai-triage": 3,
+    "type": 6,
+    "priority": 4,
+    "status": 4,
+    "area": 5,
+    "client": 5,
+    "misc": 3,
+    "total": 30
+  },
+  "labels": [
+    {
+      "name": "needs-triage",
+      "color": "E5B800",
+      "description": "Inbound; awaiting AI or human triage pass.",
+      "category": "ai-triage"
+    },
+    {
+      "name": "ai-resolved",
+      "color": "FBCA04",
+      "description": "Closed by AI triage (KNOWN_ISSUES match or duplicate). Reply to reopen for human review.",
+      "category": "ai-triage"
+    },
+    {
+      "name": "needs-human",
+      "color": "D93F0B",
+      "description": "AI flagged for human follow-up (security_critical, low-confidence, or user re-comment on ai-resolved).",
+      "category": "ai-triage"
+    },
+
+    {
+      "name": "bug",
+      "color": "D73A4A",
+      "description": "Something is broken in shipped behavior.",
+      "category": "type"
+    },
+    {
+      "name": "enhancement",
+      "color": "A2EEEF",
+      "description": "Feature request or improvement to existing behavior.",
+      "category": "type"
+    },
+    {
+      "name": "documentation",
+      "color": "0075CA",
+      "description": "Docs are wrong, missing, or unclear.",
+      "category": "type"
+    },
+    {
+      "name": "question",
+      "color": "D876E3",
+      "description": "Usage / how-to (should usually be filed as a Discussion; AI will redirect).",
+      "category": "type"
+    },
+    {
+      "name": "build-failure",
+      "color": "B60205",
+      "description": "ESP-IDF or composite-device build broke; include Job ID.",
+      "category": "type"
+    },
+    {
+      "name": "duplicate",
+      "color": "CFD3D7",
+      "description": "Duplicate of an existing issue.",
+      "category": "type"
+    },
+
+    {
+      "name": "p0-critical",
+      "color": "B60205",
+      "description": "Drop everything: data loss, security, or blocking BETA broadly.",
+      "category": "priority"
+    },
+    {
+      "name": "p1-high",
+      "color": "D93F0B",
+      "description": "Next office-hours session; clear blocker for some users.",
+      "category": "priority"
+    },
+    {
+      "name": "p2-medium",
+      "color": "FBCA04",
+      "description": "Address within the current sprint window.",
+      "category": "priority"
+    },
+    {
+      "name": "p3-low",
+      "color": "0E8A16",
+      "description": "Nice to have; no committed timeline.",
+      "category": "priority"
+    },
+
+    {
+      "name": "triaging",
+      "color": "8B5CF6",
+      "description": "Triage is in progress (AI partial-result or human reviewing).",
+      "category": "status"
+    },
+    {
+      "name": "in-progress",
+      "color": "5319E7",
+      "description": "Maintainer is actively working on this.",
+      "category": "status"
+    },
+    {
+      "name": "blocked",
+      "color": "6F42C1",
+      "description": "Waiting on upstream, hardware, or external party.",
+      "category": "status"
+    },
+    {
+      "name": "needs-info",
+      "color": "A371F7",
+      "description": "Awaiting reproduction, Job ID, or clarifying answer from reporter.",
+      "category": "status"
+    },
+
+    {
+      "name": "area/wizard",
+      "color": "0E8A16",
+      "description": "Browser wizard UI (type-driven-ui) surface.",
+      "category": "area"
+    },
+    {
+      "name": "area/mcp",
+      "color": "0E8A16",
+      "description": "MCP servers (espctl, idfmcp, browser-side surface).",
+      "category": "area"
+    },
+    {
+      "name": "area/cli",
+      "color": "0E8A16",
+      "description": "espctl CLI and local tooling.",
+      "category": "area"
+    },
+    {
+      "name": "area/agent",
+      "color": "0E8A16",
+      "description": "Aegis agent (remote builder, runner, podman side).",
+      "category": "area"
+    },
+    {
+      "name": "area/control-plane",
+      "color": "0E8A16",
+      "description": "Aegis control plane (esphome.cloud, signaling, grants, billing).",
+      "category": "area"
+    },
+
+    {
+      "name": "client/claude-code",
+      "color": "0E8FE0",
+      "description": "Reporter using Claude Code as their AI client.",
+      "category": "client"
+    },
+    {
+      "name": "client/cursor",
+      "color": "0E8FE0",
+      "description": "Reporter using Cursor.",
+      "category": "client"
+    },
+    {
+      "name": "client/codex",
+      "color": "0E8FE0",
+      "description": "Reporter using Codex CLI.",
+      "category": "client"
+    },
+    {
+      "name": "client/opencode",
+      "color": "0E8FE0",
+      "description": "Reporter using OpenCode.",
+      "category": "client"
+    },
+    {
+      "name": "client/desktop",
+      "color": "0E8FE0",
+      "description": "Reporter using Claude Desktop or another non-coding-agent client.",
+      "category": "client"
+    },
+
+    {
+      "name": "spam",
+      "color": "1D1D1D",
+      "description": "Bulk-close target; AI-classified spam.",
+      "category": "misc"
+    },
+    {
+      "name": "out-of-scope",
+      "color": "C5DEF5",
+      "description": "Outside the esphome.cloud BETA mission (e.g., OTA fleet management, multi-tenant teams).",
+      "category": "misc"
+    },
+    {
+      "name": "good-first-issue",
+      "color": "7057FF",
+      "description": "Suitable starter task for a new contributor.",
+      "category": "misc"
+    }
+  ]
+}
