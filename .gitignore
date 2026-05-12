@@ -1,0 +1,47 @@
+# OS detritus
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python (scripts/triage.py lives here in Phase 0)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.python-version
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node (if any tooling sneaks in later)
+node_modules/
+
+# Logs / dumps
+*.log
+core.*
+
+# Local secret-staging files (NEVER commit; setup-secrets.sh reads these)
+.secrets-input
+.secrets-input.*
+*.secret.env
+
+# AI tooling caches
+.claude/
+.cursor/
+
+# Build artifacts (none yet, reserved)
+build/
+dist/
+target/
