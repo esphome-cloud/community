@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "source_of_truth": "tests/fixtures/discussions_categories_expected.json",
+  "generated_at": "2026-05-13",
+  "purpose": "Canonical specification of the 5 Discussions categories per IC-9. tests/repo/discussions_cats.sh asserts the live repo matches. Categories must be created via the GitHub web UI (no public createDiscussionCategory mutation as of 2026-05); use docs/discussions-setup-walkthrough.md as the paste-driven runbook.",
+  "expected_count": 5,
+  "forbidden_names": ["General", "Off-Topic", "Chat", "Random"],
+  "categories": [
+    {
+      "name": "Announcements",
+      "emoji": ":mega:",
+      "slug_hint": "announcements",
+      "format": "ANNOUNCEMENT",
+      "description": "One-way broadcasts from the maintainer. Comments are disabled; replies live in other categories.",
+      "is_answerable": false,
+      "comments_enabled": false,
+      "ui_notes": "Create with TYPE = 'Announcement'. After creation, edit the category and uncheck 'Allow comments'."
+    },
+    {
+      "name": "Q&A",
+      "emoji": ":pray:",
+      "slug_hint": "q-a",
+      "format": "QUESTION_ANSWERS",
+      "description": "Usage questions and how-to's. Mark the accepted answer with the green check; mark-answer surfaces the best reply for future readers.",
+      "is_answerable": true,
+      "comments_enabled": true,
+      "ui_notes": "Create with TYPE = 'Question / Answer'. The mark-answer feature requires this type."
+    },
+    {
+      "name": "Ideas",
+      "emoji": ":bulb:",
+      "slug_hint": "ideas",
+      "format": "OPEN_ENDED",
+      "description": "Feature seedlings, design exploration, things that aren't quite ready to become an Issue. Upvote with thumbs-up.",
+      "is_answerable": false,
+      "comments_enabled": true,
+      "ui_notes": "Create with TYPE = 'Open-ended discussion'."
+    },
+    {
+      "name": "Show & Tell",
+      "emoji": ":hammer_and_wrench:",
+      "slug_hint": "show-and-tell",
+      "format": "OPEN_ENDED",
+      "description": "Projects you built with esphome.cloud. Photos, videos, repo links — show off what you made.",
+      "is_answerable": false,
+      "comments_enabled": true,
+      "ui_notes": "Create with TYPE = 'Open-ended discussion'."
+    },
+    {
+      "name": "Solutions Share",
+      "emoji": ":dart:",
+      "slug_hint": "solutions-share",
+      "format": "OPEN_ENDED",
+      "description": "User-contributed Solution templates: complete board × peripheral × use-case configurations others can re-use directly.",
+      "is_answerable": false,
+      "comments_enabled": true,
+      "ui_notes": "Create with TYPE = 'Open-ended discussion'."
+    }
+  ],
+  "welcome_post": {
+    "category_name": "Announcements",
+    "title": "Welcome to esphome.cloud / community",
+    "body_template": "Welcome! This repository is the single feedback intake for esphome.cloud BETA.\n\nNot sure where to file? The [README decision graph](https://github.com/esphome-cloud/community#what-do-you-want-to-do) maps your intent to one of three channels: **Discussions**, **Issues**, or **Email**. Each has one purpose; each purpose has one channel.\n\nResponse times live in [Response Times](https://github.com/esphome-cloud/community#response-times) (TL;DR: security@ within 24 hours every day; everything else on the Tuesday office-hours window, 14:00-16:00 UTC+8).\n\nThe AI triage assistant reads every Issue and Discussion within ~90 seconds and either replies with a known-issue fix, asks for missing info, or flags it for human review. Replying re-opens the thread for human review.\n\nWelcome again, and thanks for trying the BETA.",
+    "pin": true
+  }
+}
