@@ -1,0 +1,7 @@
+{
+  "issue": 106,
+  "title": "How do I configure a custom GPIO pin for the LED in the wizard?",
+  "body": "Hey! Quick question — using the browser wizard for an ESP32-C3 project. The default LED is on GPIO 8 but my board has the LED on GPIO 2. I clicked around the wizard but couldn't find where to change the pin assignment. Can someone point me at the right setting? Thanks!",
+  "_expected_category": "question",
+  "_notes": "Pure usage question; should redirect to Discussions/Q&A per ADR-002. AI may also answer inline if it's trivial."
+}

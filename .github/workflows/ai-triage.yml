@@ -13,18 +13,24 @@ on:
   discussion:
     types: [created]
 
-# Task 0.3 is a scaffold; the no-op step needs no write permissions.
-# Task 0.4 will broaden to: issues: write, discussions: write, contents: read
-# when triage.py actually labels/comments/closes.
+# Task 0.4 broadens permissions: triage.py labels, comments, and closes
+# issues; the workflow's GITHUB_TOKEN needs the corresponding write scopes.
 permissions:
   contents: read
+  issues: write
+  discussions: write
+
+# Serialise per-issue triage so two rapid edits don't fight each other.
+# At the workflow level this keeps the global ai-triage cost bounded too.
+concurrency:
+  group: ai-triage-${{ github.event.issue.number || github.event.discussion.number }}
+  cancel-in-progress: false
 
 jobs:
   triage:
     runs-on: ubuntu-latest
-    # 90s p95 budget per Task 0.3 acceptance "Function" criterion;
-    # 5-min ceiling because cold ubuntu-latest can hit the budget tightly.
-    # Trimmed in Task 0.4 once triage.py is real.
+    # p95 round-trip <90s per Task 0.4 acceptance #5; 5-min ceiling stays as
+    # safety net for cold runners.
     timeout-minutes: 5
 
     steps:
@@ -33,9 +39,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: scripts/requirements.txt
 
-      # Smoke marker: this step's name "python ok" is what the Task 0.3
-      # acceptance grep matches via `gh run view --log`. The Python
-      # command itself just prints "ok"; the step name carries the marker.
-      - name: python ok
-        run: python -c "print('ok')"
+      - name: install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      # Step name "python ok" carries the smoke marker that
+      # tests/integration/workflow_smoke.sh (Task 0.3) still greps for.
+      # scripts/triage.py also emits the Task 0.4 marker
+      # `triage.classified{issue:<N>, category:<C>, cost_usd:<X>}`
+      # to stderr, which workflow_smoke.sh's successor (triage_logs.sh)
+      # asserts on every run.
+      - name: python ok — triage
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_HOST:         ${{ secrets.SMTP_HOST }}
+          SMTP_USER:         ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:     ${{ secrets.SMTP_PASSWORD }}
+          ALERT_EMAIL:       ${{ secrets.ALERT_EMAIL }}
+          GITHUB_TOKEN:      ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/triage.py --repo "$GITHUB_REPOSITORY"

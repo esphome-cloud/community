@@ -1,0 +1,7 @@
+{
+  "issue": 105,
+  "title": "[Feature]: option to export wizard config as YAML for version control",
+  "body": "I love the browser wizard for prototyping, but for a project I want to commit alongside the rest of my repo, I'd love an 'export to YAML' button so I can check the config into git. Right now I copy the device config out by hand and the wizard layout doesn't roundtrip — so my git-tracked config drifts from what the wizard would have produced.\n\nUse case: small embedded shop with a handful of esphome.cloud projects; we want each project's wizard config to be reviewable in PRs. Would happily try a prototype build if you wanted alpha testers.",
+  "_expected_category": "feature_request",
+  "_notes": "Clearly in-scope feature request (wizard YAML export). Reply acknowledges, sets office-hours expectation."
+}

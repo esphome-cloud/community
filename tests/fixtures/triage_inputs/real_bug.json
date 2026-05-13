@@ -1,0 +1,7 @@
+{
+  "issue": 104,
+  "title": "[Build Failed]: ESP32-S3 build that worked yesterday now fails in linker, no code changes",
+  "body": "I have a project that built and flashed successfully yesterday afternoon (about 5pm UTC). This morning every build of the same project fails in the linker phase. I haven't touched the code, haven't updated IDF, haven't changed sdkconfig.\n\nError snippet:\n```\nundefined reference to `lvgl_port_init'\ncollect2: error: ld returned 1 exit status\n```\n\nI tried: `idf.py fullclean && idf.py build` — same failure. Tried from a fresh git clone — same failure.\n\nIDF version pinned at v5.5 via `.espctl.toml`. Job ID from this morning's failure: `job_abc12345`. Happy to share full build log.",
+  "_expected_category": "real_bug",
+  "_notes": "Has Job ID, has reproduction, has 'worked yesterday/fails today' shape — strong real_bug signal. AI should acknowledge + ask for any remaining missing info (full log)."
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://esphome.cloud/schemas/triage_output_v1.json",
+  "title": "Triage output (IC-1 v1)",
+  "description": "Canonical schema for scripts/triage.py output. Per IC-1 (reference/interface-contracts.md). Mismatches block via V-DEP-08.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "known_issue",
+        "duplicate",
+        "user_config",
+        "real_bug",
+        "feature_request",
+        "question",
+        "security_critical",
+        "out_of_scope",
+        "spam"
+      ],
+      "description": "Exactly one of the 9 triage categories."
+    },
+    "duplicate_of": {
+      "type": ["integer", "null"],
+      "description": "Issue number this duplicates. Integer ONLY when category=duplicate; null otherwise."
+    },
+    "labels_to_add": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "GitHub labels to apply (must exist in tests/fixtures/labels_expected.json)."
+    },
+    "should_close": {
+      "type": "boolean",
+      "description": "True for known_issue/duplicate/user_config/question/out_of_scope/spam. False for real_bug/feature_request/security_critical."
+    },
+    "response_to_user": {
+      "type": "string",
+      "description": "Comment body. For security_critical: <=200 chars AND contains 'email security@' (R-07)."
+    },
+    "page_human": {
+      "type": "boolean",
+      "description": "True ONLY when category=security_critical. Triggers SMTP-SSL pager (Task 0.5)."
+    },
+    "reasoning": {
+      "type": "string",
+      "description": "Free-form explanation of the classification decision (logged, not user-facing)."
+    }
+  },
+  "required": [
+    "category",
+    "duplicate_of",
+    "labels_to_add",
+    "should_close",
+    "response_to_user",
+    "page_human",
+    "reasoning"
+  ]
+}

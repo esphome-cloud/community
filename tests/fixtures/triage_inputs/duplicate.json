@@ -1,0 +1,7 @@
+{
+  "issue": 102,
+  "title": "[Bug]: Build fails on macOS — same as issue #50",
+  "body": "I'm hitting the exact same problem as in #50. The error message is identical, the macOS version is the same (14.4 → 14.5 minor diff but the failure mode is unchanged). Filing a new issue because that one was closed but the fix didn't seem to take in my case. Reproduction: build any ESP32-S3 project from a fresh checkout, get linker error in cmake step.",
+  "_expected_category": "duplicate",
+  "_expected_duplicate_of": 50
+}

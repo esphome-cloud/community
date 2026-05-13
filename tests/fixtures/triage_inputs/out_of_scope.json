@@ -1,0 +1,7 @@
+{
+  "issue": 108,
+  "title": "[Feature]: OTA firmware management for production fleet of ~300 ESP32 devices",
+  "body": "Hi! We're a smart-meter shop running ~300 ESP32 devices in the field. Would love to use esphome.cloud as our OTA fleet manager — push firmware updates to all 300 devices, get rollout status, automatic rollback on failure, A/B canary deploys, that kind of thing. Is this on the roadmap? Happy to be a paying design partner.",
+  "_expected_category": "out_of_scope",
+  "_notes": "Named verbatim as out-of-scope in mission-scope-policy: OTA fleet management. Polite close pointing at the README's 'What I Won't Do' section."
+}

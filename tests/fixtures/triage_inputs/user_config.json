@@ -1,0 +1,7 @@
+{
+  "issue": 103,
+  "title": "[Bug]: espctl flash doesn't see my device",
+  "body": "When I run `espctl flash build/flash_bundle.tar.gz` it says 'no device found at /dev/cu.usbmodem*'. I just plugged in my ESP32-S3 DevKitC. Is the cable a USB-C charge-only cable? Actually, never mind — switched to a data cable and it worked. Should I close this?",
+  "_expected_category": "user_config",
+  "_notes": "Reporter self-diagnosed mid-thread; classic user_config (USB cable charge-only). Reply with confirmation and close."
+}

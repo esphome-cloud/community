@@ -1,0 +1,7 @@
+{
+  "issue": 101,
+  "title": "[Bug]: pip install fails on macOS with externally-managed-environment when setting up ESP-IDF",
+  "body": "Hi, trying to set up esphome.cloud locally. I'm on macOS 14.5 (M2 MacBook Air). Followed the README, but `pip install -r requirements.txt` fails with:\n\n```\nerror: externally-managed-environment\n× This environment is externally managed\n```\n\nMy Python is from Homebrew (`python3.11`). Same error if I try `pip3` directly. Searched the Issues but didn't find anything specific to macOS + Homebrew + ESP-IDF setup. Is there a recommended workflow?",
+  "_expected_category": "known_issue",
+  "_expected_kb_match": "KI-1"
+}

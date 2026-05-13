@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-13",
+  "schema_ref": "tests/schemas/triage_output.schema.json",
+  "fixtures_dir": "tests/fixtures/triage_inputs/",
+  "expected": {
+    "known_issue.json":       {"category": "known_issue",       "should_close": true,  "page_human": false},
+    "duplicate.json":         {"category": "duplicate",         "should_close": true,  "page_human": false, "duplicate_of": 50},
+    "user_config.json":       {"category": "user_config",       "should_close": true,  "page_human": false},
+    "real_bug.json":          {"category": "real_bug",          "should_close": false, "page_human": false},
+    "feature_request.json":   {"category": "feature_request",   "should_close": false, "page_human": false},
+    "question.json":          {"category": "question",          "should_close": true,  "page_human": false},
+    "security_critical.json": {"category": "security_critical", "should_close": false, "page_human": true},
+    "out_of_scope.json":      {"category": "out_of_scope",      "should_close": true,  "page_human": false},
+    "spam.json":              {"category": "spam",              "should_close": true,  "page_human": false}
+  }
+}
