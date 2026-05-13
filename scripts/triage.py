@@ -400,21 +400,34 @@ def classify(
         ],
     )
 
-    response = client.chat.completions.create(**request_kwargs)
-    text = (response.choices[0].message.content or "").strip()
-
-    # DeepSeek occasionally returns empty content on json_object mode.
-    # Retry once before giving up — empirically this clears most cases.
-    if not text:
-        print("[triage] DeepSeek returned empty content; retrying once...", file=sys.stderr)
+    # DeepSeek occasionally returns empty content OR malformed JSON on
+    # response_format=json_object. Retry up to 2 attempts total — one
+    # retry empirically clears most transient blips. Surface a clear
+    # error if both attempts fail so the workflow log records the failure
+    # mode rather than crashing on an opaque exception.
+    decision = None
+    last_err: Exception | None = None
+    for attempt in (1, 2):
         response = client.chat.completions.create(**request_kwargs)
         text = (response.choices[0].message.content or "").strip()
         if not text:
-            raise RuntimeError(
-                "DeepSeek returned empty content twice; check prompt or rate-limits."
-            )
+            print(f"[triage] attempt {attempt}: DeepSeek returned empty content",
+                  file=sys.stderr)
+            last_err = RuntimeError("empty content")
+            continue
+        try:
+            decision = json.loads(text)
+            break
+        except json.JSONDecodeError as exc:
+            print(f"[triage] attempt {attempt}: DeepSeek returned malformed JSON: {exc}",
+                  file=sys.stderr)
+            last_err = exc
 
-    decision = json.loads(text)
+    if decision is None:
+        raise RuntimeError(
+            f"DeepSeek returned empty/malformed content twice (last: {last_err!r}); "
+            "aborting."
+        )
 
     # DeepSeek usage fields. cache_hit + cache_miss = prompt_tokens.
     u = response.usage
@@ -448,11 +461,12 @@ def enforce_invariants(decision: dict[str, Any]) -> None:
         if "email security@" not in resp:
             raise ValueError("security_critical response must contain 'email security@' (IC-1 V-3)")
 
-    # duplicate_of pairing
+    # duplicate_of pairing — `null` is the default; only required to be NON-null
+    # for category != duplicate (where it'd be wrong). For category=duplicate,
+    # null is permitted when the user self-identifies as a duplicate without a
+    # verifiable issue # reference (per the duplicate-category prompt rules).
     if cat != "duplicate" and decision["duplicate_of"] is not None:
         raise ValueError("duplicate_of must be null unless category=duplicate")
-    if cat == "duplicate" and decision["duplicate_of"] is None:
-        raise ValueError("duplicate_of required for category=duplicate")
 
     # should_close per-category rule
     expected = SHOULD_CLOSE.get(cat)
