@@ -76,10 +76,11 @@ No-GitHub fallback: email `feedback@esphome.cloud`.
 
 ## How AI helps here
 
-The first reply on most public threads comes from a Claude Opus 4.7 triage assistant
-([`scripts/triage.py`](scripts/triage.py)). It labels, points at `KNOWN_ISSUES`, closes
-duplicates, and pages a human only for security-critical reports. Replying re-opens the
-thread for human review. The full triage policy is in the script — no hidden moderation.
+The first reply on most public threads comes from a DeepSeek v4-flash triage assistant
+([`scripts/triage.py`](scripts/triage.py); see [ADR-008](governance/adr-008-deepseek-v4-flash-triage.md)).
+It labels, points at `KNOWN_ISSUES`, closes duplicates, and pages a human only for
+security-critical reports. Replying re-opens the thread for human review. The full
+triage policy is in the script — no hidden moderation.
 
 ## Code of conduct
 
@@ -97,7 +98,7 @@ Documentation: CC BY 4.0. Scripts (`scripts/`): MIT. Final `LICENSE` file lands 
 
 > [esphome.cloud](https://esphome.cloud) BETA 的反馈、想法、Bug 报告专区。
 
-由**一位创始人**独自维护,AI 助手(Claude Opus 4.7)处理第一道分诊。
+由**一位创始人**独自维护,AI 助手(DeepSeek v4-flash)处理第一道分诊。
 人工跟进集中在**周二 office hours 14:00-16:00 UTC+8**,安全报告 24 hours SLA。
 
 ### 你想做什么?

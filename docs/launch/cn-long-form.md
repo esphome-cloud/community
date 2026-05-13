@@ -81,11 +81,12 @@ AI 分诊流程,响应 SLA 一致。
 
 老实说,如果是 5 年前我做不了。
 
-2026 年的不同是:Claude Opus 4.7 + Cursor + Claude Code 这一套 AI agent 工具
+2026 年的不同是:Cursor + Claude Code 这一套 AI agent 工具
 把 ESP-IDF 配置、Rust no_std 嵌入式 + ESP-WIFI-Mesh / TCP/IP 协议栈、
 WebRTC 信令、QUIC 中继这种系统级东西的实现门槛降到了 "一个人 + 一些咖啡因 +
-office hours 节奏" 能扛住的程度。esphome.cloud 自己用了这套工具链,
-是它产生的第一批生产代码之一。
+office hours 节奏" 能扛住的程度。esphome.cloud 自己用了这套工具链构建,
+是它产生的第一批生产代码之一。社区仓库的 AI 分诊则用 DeepSeek v4-flash
+(性价比 + 地理分散性考虑;详见 ADR-008)。
 
 ## 接下来 7 天
 

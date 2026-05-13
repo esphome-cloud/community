@@ -48,7 +48,7 @@ if [ -n "$INPUT_FILE" ]; then
 fi
 
 SECRETS=(
-  ANTHROPIC_API_KEY
+  DEEPSEEK_API_KEY
   ALERT_EMAIL
   SMTP_HOST
   SMTP_USER
@@ -60,7 +60,7 @@ SECRETS=(
 # Heuristic help text per secret (shown at the interactive prompt; ASCII only).
 describe() {
   case "$1" in
-    ANTHROPIC_API_KEY) echo "sk-ant-...  Anthropic API key for Claude Opus 4.7 triage" ;;
+    DEEPSEEK_API_KEY)  echo "sk-... DeepSeek API key for v4-flash triage (per ADR-008)" ;;
     ALERT_EMAIL)       echo "founder@... mailbox that receives [CRITICAL] pager emails" ;;
     SMTP_HOST)         echo "smtp.example.com  outbound SMTP-SSL :465 host for the pager" ;;
     SMTP_USER)         echo "ai-triage@esphome.cloud  SMTP login user" ;;

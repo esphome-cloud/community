@@ -1,6 +1,7 @@
 # ADR-003: Claude Opus 4.7 as first-line AI triage
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-008](adr-008-deepseek-v4-flash-triage.md) (2026-05-13)
+- **Original status:** Accepted (2026-05-10 → 2026-05-13)
 - **Date:** 2026-05-10
 - **Deciders:** Founder
 - **Tags:** ai cost accuracy

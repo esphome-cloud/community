@@ -2,8 +2,8 @@
 # Verifies the live GitHub repo has exactly the 7 expected secret names.
 #
 # Default repo: esphome-cloud/community (override with REPO env var).
-# Golden list (order-insensitive):
-#   ANTHROPIC_API_KEY, ALERT_EMAIL, SMTP_HOST, SMTP_USER, SMTP_PASSWORD,
+# Golden list (order-insensitive; per ADR-008 ANTHROPIC_API_KEY was retired):
+#   DEEPSEEK_API_KEY, ALERT_EMAIL, SMTP_HOST, SMTP_USER, SMTP_PASSWORD,
 #   GITEE_TOKEN, GITEE_PRIVATE_KEY
 #
 # Values are intentionally NOT inspected (gh secret list never exposes them).
@@ -18,7 +18,7 @@ REPO="${REPO:-esphome-cloud/community}"
 command -v gh >/dev/null 2>&1 || { echo "FAIL: gh CLI not installed"; exit 1; }
 
 EXPECTED=(
-  ANTHROPIC_API_KEY
+  DEEPSEEK_API_KEY
   ALERT_EMAIL
   SMTP_HOST
   SMTP_USER

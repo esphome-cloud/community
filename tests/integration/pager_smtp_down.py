@@ -129,7 +129,7 @@ def assertion_b_end_to_end() -> tuple[bool, list[str]]:
             # Force the script to not try a real Anthropic call. We use --dry-run
             # in args below, but also strip the API key from env so an accidental
             # live-mode invocation can't auth.
-            "ANTHROPIC_API_KEY": "",
+            "DEEPSEEK_API_KEY": "",
         }
         # --mock-category=security_critical exercises the send path. --dry-run
         # ensures no GitHub side effects fire even if a token were present.

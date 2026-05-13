@@ -15,17 +15,18 @@ Architectural decisions for the `esphome-cloud/community` feedback infrastructur
 |---|---|---|---|---|---|
 | [001](adr-001-public-by-default.md) | Public-by-default communication channels (no Discord/Slack/WeChat) | Accepted | 2026-05-10 | architecture geo | 0 |
 | [002](adr-002-three-channels-mutually-exclusive.md) | Three mutually-exclusive feedback channels (Discussions / Issues / Email) | Accepted | 2026-05-10 | architecture ux | 0 |
-| [003](adr-003-claude-opus-triage.md) | Claude Opus 4.7 as first-line AI triage | Accepted | 2026-05-10 | ai cost | 0 |
+| [003](adr-003-claude-opus-triage.md) | Claude Opus 4.7 as first-line AI triage | Superseded by [ADR-008](adr-008-deepseek-v4-flash-triage.md) | 2026-05-10 → 2026-05-13 | ai cost | 0 |
 | [004](adr-004-github-source-of-truth.md) | GitHub as single source of truth, Gitee read-only mirror only | Accepted | 2026-05-10 | china architecture | 2 |
 | [005](adr-005-office-hours-only-sla.md) | Office-hours-only personal SLA (Tuesday 14:00-16:00 UTC+8) | Accepted | 2026-05-10 | sustainability sla | 1 |
 | [006](adr-006-known-issues-in-script.md) | KNOWN_ISSUES as in-script Python string (deferred RAG upgrade) | Accepted | 2026-05-10 | ai infra | 0 |
 | [007](adr-007-feedback-redirect.md) | `feedback@` auto-redirects to GitHub (does not bypass mutual exclusion) | Accepted | 2026-05-10 | architecture ux | 1 |
+| [008](adr-008-deepseek-v4-flash-triage.md) | DeepSeek v4-flash as first-line AI triage (supersedes ADR-003) | Accepted | 2026-05-13 | ai cost geo | 3 |
 
 ## Cross-cutting concerns
 
 - **GEO posture** — ADR-001 is the load-bearing rule; ADR-002, ADR-004, ADR-007 all derive consistency from it.
 - **Sustainability** — ADR-005 anchors the founder time budget; ADR-002 and ADR-007 enforce it via channel boundary.
-- **Cost envelope** — ADR-003 is the dominant cost lever; ADR-006 keeps prompt size bounded; both report into `governance/budget.md`.
+- **Cost envelope** — ADR-008 (formerly ADR-003) is the dominant cost lever; ADR-006 keeps prompt size bounded; both report into `governance/budget.md`. Migration to DeepSeek dropped per-issue cost by ~250×.
 - **China access** — ADR-004 is the only ADR that addresses Chinese users; the rest are language-independent.
 
 ## Related artifacts

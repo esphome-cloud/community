@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Claude Opus 4.7 triage for esphome-cloud/community.
+"""DeepSeek v4-flash triage for esphome-cloud/community.
 
-Per ADR-003 + IC-1 + Phase 0 Task 0.4. Classifies a GitHub Issue or Discussion
-into one of 9 categories, emits a JSON decision matching tests/schemas/
-triage_output.schema.json, and dispatches actions (labels / comment / close /
-SMTP-SSL pager) when not running in --dry-run mode.
+Per ADR-008 (supersedes ADR-003) + IC-1 + Phase 0 Task 0.4. Classifies a GitHub
+Issue or Discussion into one of 9 categories, emits a JSON decision matching
+tests/schemas/triage_output.schema.json, and dispatches actions (labels /
+comment / close / SMTP-SSL pager) when not running in --dry-run mode.
 
 Run modes:
-  - --dry-run --input <fixture.json>   : real Claude call, no GitHub side-effects
+  - --dry-run --input <fixture.json>   : real DeepSeek call, no GitHub side-effects
   - --mock-category <cat>              : offline stub (CI + schema tests; no API key needed)
   - GITHUB_EVENT_PATH in env           : live mode under .github/workflows/ai-triage.yml
 
@@ -15,7 +15,9 @@ Observability (Phase 0 Task 0.4 acceptance):
   Every run emits to stderr:
     triage.classified{issue:<N>, category:<C>, cost_usd:<X>}
 
-Invariants enforced client-side (defense in depth atop output_config schema):
+Invariants enforced client-side (FIRST LINE since DeepSeek json_object does NOT
+enforce schemas server-side — under Claude this was defense-in-depth atop
+output_config.format.json_schema; now it's the only schema check):
   - page_human=true  iff  category=security_critical
   - duplicate_of is int  iff  category=duplicate (else null)
   - should_close per the IC-1 per-category table
@@ -35,10 +37,11 @@ from pathlib import Path
 from typing import Any
 
 # ----------------------------------------------------------------------------
-# Constants — per IC-1, ADR-003, governance/budget.md, governance/risk-register.md
+# Constants — per IC-1, ADR-008, governance/budget.md, governance/risk-register.md
 # ----------------------------------------------------------------------------
 
-MODEL = "claude-opus-4-7"
+MODEL = "deepseek-v4-flash"
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 
 CATEGORIES = [
     "known_issue", "duplicate", "user_config", "real_bug", "feature_request",
@@ -54,11 +57,11 @@ SHOULD_CLOSE = {
 }
 
 # Pricing (USD per 1M tokens) for the cost-per-issue log line.
-# Opus 4.7 base; 5-minute ephemeral cache writes at 1.25x; cache reads at 0.1x.
-PRICE_INPUT_PER_M   = 5.00
-PRICE_OUTPUT_PER_M  = 25.00
-PRICE_CACHE_WRITE   = 6.25   # 1.25 x base input
-PRICE_CACHE_READ    = 0.50   # 0.10 x base input
+# DeepSeek v4-flash: $0.14 input cache-miss / $0.0028 input cache-hit / $0.28 output.
+# Automatic prefix caching — no client-side cache_control markers needed.
+PRICE_INPUT_PER_M        = 0.14    # cache-miss input
+PRICE_INPUT_CACHE_HIT    = 0.0028  # cache-hit input (~50x cheaper)
+PRICE_OUTPUT_PER_M       = 0.28
 
 DISCLOSURE_FOOTER = "\n\n— Triaged by AI; reply to reopen for human review"
 
@@ -287,19 +290,20 @@ no preamble.
 """
 
 
-def build_system_prompt() -> list[dict[str, Any]]:
-    """Return the system prompt as a single cached text block.
+def build_system_prompt() -> str:
+    """Return the system prompt as a single string.
 
-    cache_control on the LAST block caches the entire prefix (tools + system).
-    Per Opus 4.7's 4096-token minimum, this prompt is sized to easily exceed
-    that floor; check response.usage.cache_read_input_tokens to verify hits.
+    DeepSeek does automatic prefix caching server-side — no client-side
+    cache_control markers needed. The system prompt is stable across all
+    issue calls (only the per-issue user message varies), so the entire
+    system prompt becomes a cache-hit after the first request.
+
+    Verify cache hits via response.usage.prompt_cache_hit_tokens at runtime.
+
+    The prompt contains the literal lowercase word "json" (DeepSeek
+    requirement for response_format=json_object to take effect).
     """
-    text = SYSTEM_PROMPT_TEMPLATE.format(known_issues=_render_known_issues())
-    return [{
-        "type": "text",
-        "text": text,
-        "cache_control": {"type": "ephemeral"},
-    }]
+    return SYSTEM_PROMPT_TEMPLATE.format(known_issues=_render_known_issues())
 
 
 # ----------------------------------------------------------------------------
@@ -362,36 +366,51 @@ def classify(
 ) -> tuple[dict[str, Any], dict[str, int]]:
     """Classify an issue. Returns (decision, usage_dict).
 
-    usage_dict has keys input_tokens, output_tokens, cache_creation_input_tokens,
-    cache_read_input_tokens (zeros for the mock path).
+    usage_dict has keys prompt_tokens, completion_tokens,
+    prompt_cache_hit_tokens, prompt_cache_miss_tokens
+    (zeros for the mock path; DeepSeek-shape under live path).
     """
     if mock_category is not None:
         return _build_mock(mock_category, title), {
-            "input_tokens": 0, "output_tokens": 0,
-            "cache_creation_input_tokens": 0, "cache_read_input_tokens": 0,
+            "prompt_tokens": 0, "completion_tokens": 0,
+            "prompt_cache_hit_tokens": 0, "prompt_cache_miss_tokens": 0,
         }
 
-    import anthropic  # Imported lazily so --mock-category works offline.
-    client = anthropic.Anthropic()
+    from openai import OpenAI  # Imported lazily so --mock-category works offline.
 
-    response = client.messages.create(
-        model=MODEL,
-        max_tokens=2048,
-        system=build_system_prompt(),
-        output_config={
-            "format": {"type": "json_schema", "schema": OUTPUT_SCHEMA},
-        },
-        messages=[{"role": "user", "content": _render_user_message(title, body)}],
+    # DeepSeek API is OpenAI-compatible. Auth: Bearer DEEPSEEK_API_KEY.
+    client = OpenAI(
+        api_key=os.environ["DEEPSEEK_API_KEY"],
+        base_url=DEEPSEEK_BASE_URL,
     )
 
-    text = next(b.text for b in response.content if b.type == "text")
+    response = client.chat.completions.create(
+        model=MODEL,
+        max_tokens=2048,
+        # DeepSeek does NOT enforce json_schema — only json_object (free-form).
+        # Schema enforcement happens client-side via enforce_invariants().
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": build_system_prompt()},
+            {"role": "user",   "content": _render_user_message(title, body)},
+        ],
+    )
+
+    text = response.choices[0].message.content or ""
+    if not text:
+        # DeepSeek occasionally returns empty content on json_object mode;
+        # re-raise so the workflow records a failure rather than silently
+        # producing a malformed decision.
+        raise RuntimeError("DeepSeek returned empty content; check prompt or retry.")
     decision = json.loads(text)
 
+    # DeepSeek usage fields. cache_hit + cache_miss = prompt_tokens.
+    u = response.usage
     usage = {
-        "input_tokens": response.usage.input_tokens,
-        "output_tokens": response.usage.output_tokens,
-        "cache_creation_input_tokens": getattr(response.usage, "cache_creation_input_tokens", 0) or 0,
-        "cache_read_input_tokens": getattr(response.usage, "cache_read_input_tokens", 0) or 0,
+        "prompt_tokens":             getattr(u, "prompt_tokens", 0) or 0,
+        "completion_tokens":         getattr(u, "completion_tokens", 0) or 0,
+        "prompt_cache_hit_tokens":   getattr(u, "prompt_cache_hit_tokens", 0) or 0,
+        "prompt_cache_miss_tokens":  getattr(u, "prompt_cache_miss_tokens", 0) or 0,
     }
     return decision, usage
 
@@ -437,12 +456,28 @@ def enforce_invariants(decision: dict[str, Any]) -> None:
 # ----------------------------------------------------------------------------
 
 def compute_cost_usd(usage: dict[str, int]) -> float:
+    """Sum DeepSeek per-1M rates against the usage breakdown.
+
+    DeepSeek v4-flash:
+      - prompt_cache_miss_tokens × $0.14 / 1M  (fresh input)
+      - prompt_cache_hit_tokens  × $0.0028 / 1M (50× cheaper; auto-cached prefix)
+      - completion_tokens        × $0.28 / 1M  (output)
+
+    If only the legacy `prompt_tokens` field is populated (some SDK versions
+    bundle cache hit+miss into one field), the entire prompt is billed at
+    cache-miss rate — conservative.
+    """
+    miss = usage.get("prompt_cache_miss_tokens", 0) or 0
+    hit  = usage.get("prompt_cache_hit_tokens", 0) or 0
+    out  = usage.get("completion_tokens", 0) or 0
+    # Fallback if the SDK didn't split hit/miss: charge `prompt_tokens` at miss rate.
+    if miss == 0 and hit == 0 and usage.get("prompt_tokens", 0):
+        miss = usage["prompt_tokens"]
     return round(
-        usage["input_tokens"] * PRICE_INPUT_PER_M / 1_000_000
-        + usage["cache_creation_input_tokens"] * PRICE_CACHE_WRITE / 1_000_000
-        + usage["cache_read_input_tokens"] * PRICE_CACHE_READ / 1_000_000
-        + usage["output_tokens"] * PRICE_OUTPUT_PER_M / 1_000_000,
-        4,
+        miss * PRICE_INPUT_PER_M / 1_000_000
+        + hit  * PRICE_INPUT_CACHE_HIT / 1_000_000
+        + out  * PRICE_OUTPUT_PER_M / 1_000_000,
+        6,  # 6 decimals — DeepSeek per-issue cost lands near $0.0001
     )
 
 
@@ -559,12 +594,12 @@ def _read_gh_event() -> tuple[str, str, int]:
 # ----------------------------------------------------------------------------
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Claude Opus 4.7 triage for esphome-cloud/community.")
+    p = argparse.ArgumentParser(description="DeepSeek v4-flash triage for esphome-cloud/community.")
     p.add_argument("--dry-run", action="store_true",
                    help="Classify and emit JSON, but do NOT label/comment/close on GitHub.")
     p.add_argument("--input", help="Path to fixture JSON (title + body + optional issue#).")
     p.add_argument("--mock-category", choices=CATEGORIES,
-                   help="Skip Claude API entirely; emit a stub decision. Offline-only.")
+                   help="Skip DeepSeek API entirely; emit a stub decision. Offline-only.")
     p.add_argument("--issue", type=int, default=0,
                    help="Issue number (overrides fixture / event when set).")
     p.add_argument("--repo", default="esphome-cloud/community",
