@@ -65,22 +65,22 @@ DISCLOSURE_FOOTER = "\n\n— Triaged by AI; reply to reopen for human review"
 # 4 starter KNOWN_ISSUES (ADR-006 in-script KB; Task 0.6 seed).
 KNOWN_ISSUES: list[dict[str, str]] = [
     {
-        "id": "KI-1",
+        "id": "ISSUE #1",
         "symptom": "ESP-IDF setup fails on macOS with Python venv conflicts; pip cannot install requirements against the system Python.",
         "fix": "Use Espressif's `install.sh` which provisions its own venv under `~/.espressif/`. Do NOT use Homebrew Python or `pip install -r requirements.txt` against the system Python. After install run `. ./export.sh` from a fresh shell.",
     },
     {
-        "id": "KI-2",
+        "id": "ISSUE #2",
         "symptom": "WebRTC data-channel never opens; `on_open` times out and ICE shows `no candidate pairs`.",
         "fix": "This is firewall/NAT mediation. Confirm the agent's UDP 49152-49231 range is reachable, and the control plane's TURN at 3478 TCP/UDP is open. From a restricted network, the TURN-relayed path must succeed within ~5s or you will hit the test-pattern fast-fail.",
     },
     {
-        "id": "KI-3",
+        "id": "ISSUE #3",
         "symptom": "ESP32-S3 build with LVGL crashes at runtime with `assert failed: heap_caps_malloc_alloc OOM`.",
         "fix": "PSRAM is required for non-trivial LVGL frames. Enable `CONFIG_SPIRAM=y` and `CONFIG_SPIRAM_USE_MALLOC=y` in sdkconfig, and pin LVGL buffers to PSRAM via `lv_disp_draw_buf_init` with `MALLOC_CAP_SPIRAM`. Without PSRAM, LVGL works only for trivial sub-200KB UIs.",
     },
     {
-        "id": "KI-4",
+        "id": "ISSUE #4",
         "symptom": "Claude Code MCP server for espctl shows 'authentication failed' or 'control plane unreachable'.",
         "fix": "Set MCP_AUTH_SECRET in the MCP server's env section in .claude/settings.json (matching AGENT_AUTH_SECRET on the control plane). Verify CONTROL_BASE_URL is a routable URL (e.g. https://esphome.cloud), NOT an SSH alias. The browser-side surface needs CORS to include https://esphome.cloud on the control plane.",
     },
@@ -204,9 +204,9 @@ Output:
   "duplicate_of": null,
   "labels_to_add": ["ai-resolved","area/cli"],
   "should_close": true,
-  "response_to_user": "This matches KI-1: ESP-IDF setup on macOS needs Espressif's own venv. Run `./install.sh` from the IDF tree (it provisions `~/.espressif/`) rather than `pip install` against system Python, then `. ./export.sh` in a fresh shell. Closing — please reopen if the install.sh path also fails.",
+  "response_to_user": "This matches the macOS ESP-IDF venv KB entry: ESP-IDF setup on macOS needs Espressif's own venv. Run `./install.sh` from the IDF tree (it provisions `~/.espressif/`) rather than `pip install` against system Python, then `. ./export.sh` in a fresh shell. Closing — please reopen if the install.sh path also fails.",
   "page_human": false,
-  "reasoning": "Title + body exactly match KI-1 (ESP-IDF macOS venv conflict). The user said 'pip install -r requirements.txt' which is the exact anti-pattern the KB warns against."
+  "reasoning": "Title + body exactly match the macOS ESP-IDF venv KB entry. The user said 'pip install -r requirements.txt' which is the exact anti-pattern the KB warns against."
 }}
 
 ### Example B — real_bug + ask for Job ID
