@@ -1,0 +1,16 @@
+# wrangler config for esphome-cloud-email-router.
+# Run `wrangler deploy` to deploy; ensure the account has Email Routing
+# enabled on esphome.cloud and the 4 aliases are bound (via dashboard or via
+# Email Routing API — wrangler bindings only handle the Worker side).
+
+name = "esphome-cloud-email-router"
+main = "email-router.js"
+compatibility_date = "2026-05-14"
+
+# Variables — set actual values via `wrangler secret put` (for sensitive) or
+# the dashboard (for non-sensitive). FROM_ADDRESS isn't sensitive; FORWARD_TO
+# is the founder inbox, treat as personal info.
+[vars]
+FROM_ADDRESS = "ai-triage@esphome.cloud"
+
+# FORWARD_TO is set via dashboard rather than checked into git.
