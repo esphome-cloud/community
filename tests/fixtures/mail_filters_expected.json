@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "generated_at": "2026-05-13",
+  "purpose": "Canonical specification of the founder's mail filter rules for esphome.cloud inbound. Per ADR-005 office-hours discipline + Task 3.2 acceptance #2. tests/repo/mail_filters_check.sh compares against the founder's exported filter file (provider-specific format) when run live.",
+  "filters": [
+    {
+      "id": "feedback-office-hours-label",
+      "applies_to": "feedback@esphome.cloud",
+      "match": {"to_address": "feedback@esphome.cloud"},
+      "actions": [
+        {"type": "label", "name": "esphome-feedback"},
+        {"type": "label", "name": "esphome-week-{week-of-year}"}
+      ],
+      "rationale": "Auto-label by destination address + week-of-year so the Tuesday office-hours sweep is one search-by-label."
+    },
+    {
+      "id": "feedback-archive-outside-window",
+      "applies_to": "feedback@esphome.cloud",
+      "match": {
+        "to_address": "feedback@esphome.cloud",
+        "time_of_day_not_in": ["Tue 14:00-16:00 UTC+8"]
+      },
+      "actions": [
+        {"type": "archive"},
+        {"type": "keep_label", "name": "esphome-feedback"}
+      ],
+      "rationale": "Archive on arrival outside the Tuesday window so the inbox doesn't accrue. Auto-reply per IC-2 sets the response-time expectation; founder reads at next Tuesday."
+    },
+    {
+      "id": "hello-office-hours-label",
+      "applies_to": "hello@esphome.cloud",
+      "match": {"to_address": "hello@esphome.cloud"},
+      "actions": [
+        {"type": "label", "name": "esphome-hello"},
+        {"type": "star"}
+      ],
+      "rationale": "Star hello@ inbound — these are commercial/partnership/press and warrant a closer look during office hours."
+    },
+    {
+      "id": "hello-archive-outside-window",
+      "applies_to": "hello@esphome.cloud",
+      "match": {
+        "to_address": "hello@esphome.cloud",
+        "time_of_day_not_in": ["Tue 14:00-16:00 UTC+8"]
+      },
+      "actions": [
+        {"type": "archive"},
+        {"type": "keep_label", "name": "esphome-hello"},
+        {"type": "keep_star"}
+      ],
+      "rationale": "Same archive-outside-window discipline as feedback@."
+    },
+    {
+      "id": "security-no-archive-immediate",
+      "applies_to": "security@esphome.cloud",
+      "match": {"to_address": "security@esphome.cloud"},
+      "actions": [
+        {"type": "label", "name": "esphome-security"},
+        {"type": "important"},
+        {"type": "no_archive"}
+      ],
+      "rationale": "Security has 24h SLA every day; MUST stay in inbox, MUST flag as important. No archive."
+    },
+    {
+      "id": "critical-pager-no-archive-important",
+      "applies_to": "ALERT_EMAIL (founder mailbox)",
+      "match": {"from_address": "ai-triage@esphome.cloud", "subject_starts_with": "[CRITICAL]"},
+      "actions": [
+        {"type": "label", "name": "esphome-critical"},
+        {"type": "important"},
+        {"type": "no_archive"},
+        {"type": "notify_push"}
+      ],
+      "rationale": "Phase-0 Task 0.5 pager output. Push notification mandatory; this is the only out-of-office-hours wake."
+    },
+    {
+      "id": "support-no-public-leak",
+      "applies_to": "support@esphome.cloud",
+      "match": {"to_address": "support@esphome.cloud"},
+      "actions": [
+        {"type": "label", "name": "esphome-support-paid"},
+        {"type": "redact_from_public_logs"}
+      ],
+      "rationale": "support@ is BETA-period-not-public; mail content potentially contains commercial-tier info. Don't include in any public retro screenshot."
+    }
+  ],
+  "forbidden_filters": [
+    {
+      "pattern": "auto-forward-to-realtime-chat",
+      "rationale": "Per ADR-001 no realtime chat channel exists; no filter may forward inbound to one."
+    },
+    {
+      "pattern": "auto-reply-during-office-hours",
+      "rationale": "The provider-side auto-reply (per IC-2/3/4/5) fires on inbound. A second auto-reply during office hours would loop with senders' auto-replies."
+    }
+  ]
+}

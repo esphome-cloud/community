@@ -166,10 +166,9 @@ You MUST classify into one of these. The category determines downstream dispatch
      - NOT contain exploit details, vulnerable file paths, or PoC commands
    `should_close=false`, `page_human=true`, `labels_to_add=["needs-human"]`.
 
-8. **out_of_scope** — feature is outside the esphome.cloud BETA mission. Cf. mission-scope-policy:
-   OTA fleet management, multi-tenant team collaboration, generic IoT platform features.
-   Reply by pointing at what is in-scope. `should_close=true`,
-   `labels_to_add=["out-of-scope"]`.
+8. **out_of_scope** — feature is outside the esphome.cloud BETA mission per
+   the Mission alignment section below. Reply by pointing at what is in-scope.
+   `should_close=true`, `labels_to_add=["out-of-scope"]`.
 
 9. **spam** — bulk-generated, off-topic, or commercial promotion. Reply with a short
    bulk-close template. `should_close=true`, `labels_to_add=["spam"]`.
@@ -186,6 +185,30 @@ You MUST classify into one of these. The category determines downstream dispatch
   or 飞书 — these channels do not exist for the project (ADR-001 invariant).
 - Replies are concise (under 1000 chars for non-security cases). The agent appends a
   disclosure footer; do not include the footer in your reply.
+
+## Mission alignment
+
+esphome.cloud is a single-device wizard + remote build + flash pipeline for ESP32-family
+microcontrollers, designed for solo developers and small embedded shops who want to compose
+firmware out of well-tested Solution templates rather than wrestle ESP-IDF from scratch.
+The mission is **lower the activation energy from idea → flashed device** for one device
+at a time, with AI-native tooling (MCP servers + browser wizard + Claude Code integration)
+doing the heavy lifting around configuration and build pipelines.
+
+In scope:
+  - ESP32-family firmware build (single device at a time)
+  - Solution templates (composable board × peripheral × use-case configs)
+  - Browser wizard (esphome.cloud)
+  - MCP integration (espctl-mcp, idfmcp, @aegis/espctl-web)
+  - AI agent native (Claude Code / Cursor / Codex CLI / OpenCode / Claude Desktop)
+
+Out of scope (classify these as `out_of_scope`):
+  - OTA fleet management (push firmware to 100+ devices in the field)
+  - Device management (inventory, remote-config push, device-state telemetry)
+  - Team collaboration (multi-tenant orgs, RBAC, shared workspaces, SSO)
+  - IoT platform features (data ingestion, time-series DBs, rules engines, dashboards)
+
+Full policy + re-evaluation triggers at policies/mission-scope-policy.md.
 
 {known_issues}
 

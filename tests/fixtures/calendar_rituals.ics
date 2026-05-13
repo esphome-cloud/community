@@ -1,0 +1,37 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//esphome.cloud//Community Rituals 1.0//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+
+BEGIN:VEVENT
+UID:tuesday-office-hours@esphome.cloud
+DTSTART;TZID=Asia/Shanghai:20260519T140000
+DTEND;TZID=Asia/Shanghai:20260519T160000
+RRULE:FREQ=WEEKLY;BYDAY=TU
+SUMMARY:esphome.cloud office hours
+DESCRIPTION:Public-channel response window. Read Issues / Discussions / feedback@ / hello@. Reply within this block; no other times. See policies/sla-policy.md.
+LOCATION:Async (GitHub + email)
+END:VEVENT
+
+BEGIN:VEVENT
+UID:monthly-review@esphome.cloud
+DTSTART;TZID=Asia/Shanghai:20260531T140000
+DTEND;TZID=Asia/Shanghai:20260531T160000
+RRULE:FREQ=MONTHLY;BYMONTHDAY=-1
+SUMMARY:esphome.cloud monthly review
+DESCRIPTION:KNOWN_ISSUES review + cost retro + anti-abuse audit + secret rotation if 90d elapsed. Writes governance/retros/incidents-YYYYMM.md.
+LOCATION:Async
+END:VEVENT
+
+BEGIN:VEVENT
+UID:yearly-mission-reread@esphome.cloud
+DTSTART;TZID=Asia/Shanghai:20270101T140000
+DTEND;TZID=Asia/Shanghai:20270101T150000
+RRULE:FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=1
+SUMMARY:esphome.cloud mission re-read + phase decision
+DESCRIPTION:Re-read policies/mission-scope-policy.md + decide whether to advance to next phase / open a new ADR / retire any open risks.
+LOCATION:Async
+END:VEVENT
+
+END:VCALENDAR
