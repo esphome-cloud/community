@@ -28,7 +28,7 @@
     {
       "name": "needs-human",
       "color": "D93F0B",
-      "description": "AI flagged for human follow-up (security_critical, low-confidence, or user re-comment on ai-resolved).",
+      "description": "AI flagged for human follow-up: security_critical, low-confidence, or re-comment on ai-resolved.",
       "category": "ai-triage"
     },
 

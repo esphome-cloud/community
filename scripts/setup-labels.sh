@@ -55,17 +55,22 @@ while IFS=$'\t' read -r name color desc; do
     continue
   fi
 
-  if gh label create "$name" \
+  # Capture stderr so failures surface the actual GitHub error.
+  if err=$(gh label create "$name" \
        --color "$color" \
        --description "$desc" \
        --repo "$REPO" \
-       --force >/dev/null 2>&1; then
+       --force 2>&1 >/dev/null); then
     echo "ok"
     ok=$((ok + 1))
   else
-    echo "FAILED"
+    # Trim to one line for readability; full error still goes to terminal.
+    short=$(printf '%s' "$err" | head -1)
+    echo "FAILED — $short"
     failed=$((failed + 1))
   fi
+  # Small spacer to avoid GitHub's secondary rate limit on burst creates.
+  sleep 0.3
 done < <(jq -r '.labels[] | [.name, .color, .description] | @tsv' "$FIXTURE")
 
 echo
