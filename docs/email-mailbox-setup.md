@@ -6,7 +6,32 @@
 >
 > Last updated: 2026-05-14.
 
-## Architecture
+## Architecture (depends on which DNS provider hosts esphome.cloud)
+
+This runbook supports TWO inbound paths. Pick the one that matches your
+current DNS provider; outbound + verification steps are the same for both.
+
+### Path A — DNS on DNSPod (recommended for mainland China founders)
+
+```
+   any sender   →    esphome.cloud MX    →    Tencent Enterprise Email   →    founder's primary inbox
+                    (records on DNSPod)         (4 mailboxes,                  (forwarded copy)
+                                                 free 1st year)
+                                                       │
+                                                       │ also fires per-mailbox
+                                                       ▼
+                                              auto-reply (configured in
+                                              TEE web UI, byte-equal to
+                                              tests/fixtures/email_autoreplies/<alias>.txt)
+                                                       │
+                                                       ▼
+                                              auto-reply → back to original sender
+```
+
+Cost: ¥0/yr for first year (under 5 mailboxes), then ¥35/mailbox/yr.
+Best mainland-China reachability + native DNSPod integration.
+
+### Path B — DNS on Cloudflare (recommended for founders outside CN)
 
 ```
    any sender                 esphome.cloud MX                       founder's primary inbox
@@ -25,35 +50,138 @@
                    auto-reply  →  back to the original sender
 ```
 
-**Why this stack:**
-- **Cloudflare Email Routing**: FREE forwarding. Catch-all + per-alias rules.
-- **Cloudflare Email Worker** (Email Workers feature): intercepts incoming
-  mail BEFORE forwarding, gives us full control to send custom auto-replies.
-- **MailChannels Send API**: free outbound mail for Cloudflare-hosted Workers.
-  No SMTP server to operate; no separate cost.
-- **Total cost: $0/mo** for the 4-mailbox path. Compare to Postmark $15/mo,
-  Mailgun $35/mo, etc.
+**Why these stacks:**
+- **Path A — Tencent Enterprise Email (TEE)**: native to DNSPod (both are
+  Tencent products; setup wizard auto-creates MX + SPF + DKIM at DNSPod
+  with one click). Per-mailbox auto-reply UI with full Subject + Body
+  customization. Reliable from mainland China.
+- **Path B — Cloudflare Email Routing**: FREE forever. Requires CF
+  nameservers authoritative for esphome.cloud (= migrating DNS to CF).
+- **Cloudflare Email Worker**: intercepts mail before forwarding, calls
+  MailChannels for custom auto-replies. Path B only.
 
-**Alternative architectures** (if Cloudflare isn't an option):
-- **ImprovMX Premium ($9/mo)** — drop-in for inbound forward + auto-reply
-- **Mailgun Flex** (~$0.80/1K incl. inbound) — pay-as-you-go
-- **Postmark Streams ($15/mo)** — slickest UI, most expensive
-- **Tencent Enterprise Email** (~¥35/user/year) — best inside-China reachability
-
-This runbook assumes Cloudflare. The DNS records section is provider-agnostic;
-only the Worker setup is CF-specific.
+**Other alternatives** if neither A nor B fits:
+- **ImprovMX Premium ($9/mo)** — drop-in: keep DNSPod, add MX records
+  pointing at ImprovMX, configure auto-reply in their UI.
+- **Mailgun Flex** (~$0.80/1K incl. inbound) — pay-as-you-go.
+- **Postmark Streams ($15/mo)** — slickest UI, most expensive.
+- **Self-host postfix on debian1301** — free but ~2-4h setup;
+  Tencent Cloud may block inbound port 25 by default (unblock request needed).
 
 ## Prerequisites
 
-- [ ] DNS for `esphome.cloud` is on Cloudflare (or you're willing to migrate it).
-  Verify: `dig +short NS esphome.cloud` returns Cloudflare nameservers.
-- [ ] Cloudflare account with Email Routing + Workers enabled (free tier).
-- [ ] Founder's primary inbox decided (e.g. `founder-personal@163.com` or
-  similar — destination for forwarded mail + the `ALERT_EMAIL` for pager).
+### For Path A (DNSPod + TEE) — recommended for mainland founders
+
+- [ ] DNS for `esphome.cloud` is on DNSPod (verify: `dig +short NS esphome.cloud`
+  shows `.dnspod.net` or `.dnsv1.com` etc. nameservers).
+- [ ] Tencent Cloud account with DNSPod access; the founder's account also
+  has access to the same Tencent Cloud organization (single-account is fine
+  for solo).
+- [ ] Decide founder primary inbox (e.g. `founder-personal@163.com`) for
+  forwarded mail + the `ALERT_EMAIL` for pager.
 - [ ] Auto-reply fixture bodies in this repo at
   `tests/fixtures/email_autoreplies/{feedback,security,hello,support}.txt`.
 
-## Step 1 — Enable Cloudflare Email Routing (5 min)
+### For Path B (Cloudflare) — recommended for non-CN founders
+
+- [ ] Willing to migrate DNS from current provider to Cloudflare (free; 24-48h
+  propagation). NOT recommended if you're on DNSPod and live in mainland China.
+- [ ] Cloudflare account with Email Routing + Workers enabled (free tier).
+- [ ] Founder's primary inbox decided.
+- [ ] Same fixture bodies as Path A.
+
+---
+
+## Path A — DNSPod + Tencent Enterprise Email
+
+### Step A.1 — Create Tencent Enterprise Email tenant (10 min)
+
+1. Sign in to Tencent Cloud → search "企业邮箱" / "Enterprise Email" →
+   open the Tencent Enterprise Email console.
+2. Click "立即开通" / "Activate" → choose the free tier (5 mailboxes
+   under "Lite" / 轻量版). First year is free; renewal at ¥35/mailbox/yr.
+3. Bind the `esphome.cloud` domain.
+4. The wizard prompts you to add MX records. Because DNSPod and TEE are
+   both Tencent products, click "一键添加" / "Add automatically" — TEE
+   will inject the required records into DNSPod via your linked account.
+
+Expected DNSPod records after auto-add:
+```
+MX   esphome.cloud   mxbiz1.qq.com    priority 5
+MX   esphome.cloud   mxbiz2.qq.com    priority 10
+TXT  esphome.cloud   "v=spf1 include:spf.mail.qq.com ~all"
+TXT  <selector>._domainkey.esphome.cloud   "v=DKIM1; ..."  (TEE generates a selector)
+```
+
+Verify: `dig +short MX esphome.cloud` should return the two `mxbiz*.qq.com`
+hosts within ~5 minutes (DNSPod's TTL is short).
+
+### Step A.2 — Create the 4 mailboxes (5 min)
+
+In TEE console → 邮箱管理 / Mailbox management → 新建邮箱 / Create:
+
+| Address | Display name | Initial password |
+|---|---|---|
+| `feedback@esphome.cloud` | esphome.cloud Feedback | (any; founder won't log in here directly) |
+| `security@esphome.cloud` | esphome.cloud Security | (any) |
+| `hello@esphome.cloud` | esphome.cloud Hello | (any) |
+| `support@esphome.cloud` | esphome.cloud Support | (any) |
+
+Don't enable 2FA on these — they're never logged into interactively.
+
+### Step A.3 — Configure forwarding to founder inbox (5 min)
+
+For each of the 4 mailboxes:
+
+1. Log in to TEE webmail as that mailbox (use the initial password).
+2. 设置 / Settings → 邮件转发 / Mail forwarding → enable.
+3. Forward to: `<founder primary inbox>` (e.g. `founder-personal@163.com`).
+4. Check "保留邮件副本" / "Keep a copy" (so TEE retains the original for the
+   auto-reply trigger).
+5. Save.
+
+### Step A.4 — Configure auto-reply per mailbox (15 min)
+
+For each of the 4 mailboxes, in TEE webmail:
+
+1. 设置 / Settings → 自动回复 / Auto-reply → 启用 / Enable.
+2. **Subject** — paste the first line (minus `Subject: `) from the matching
+   fixture:
+
+   | Mailbox | Subject (paste exactly) |
+   |---|---|
+   | `feedback@` | `We received your feedback (and please use GitHub)` |
+   | `security@` | `Security issue received (24-hour acknowledgement SLA)` |
+   | `hello@` | `Hello — and a quick note on response times` |
+   | `support@` | `Support request received` |
+
+3. **Body** — paste lines 3+ (everything after the blank line) from the
+   matching `tests/fixtures/email_autoreplies/<alias>.txt`. Preserve
+   whitespace exactly.
+4. **回复频率 / Reply frequency** — set to "每个发件人每天一次" / "Once per
+   sender per day" (default). The byte-equal acceptance test sends one
+   trial per mailbox, so once-per-day is sufficient.
+5. Save.
+
+**Verification command after Steps A.1-A.4:**
+
+```bash
+# From any external mailbox (your personal Gmail / 163), send a test:
+echo "test body" | mail -s "test subject" feedback@esphome.cloud
+
+# Within 60s, that sender mailbox should receive an auto-reply with:
+#  Subject: "We received your feedback (and please use GitHub)"
+#  Body: matches tests/fixtures/email_autoreplies/feedback.txt
+# The founder inbox should ALSO receive the forwarded copy of the original.
+```
+
+Skip to **Step 4 — Wire SMTP secrets for the pager** below.
+
+---
+
+## Path B — Cloudflare Email Routing + Worker
+
+### Step B.1 — Enable Cloudflare Email Routing (5 min)
 
 1. Cloudflare dashboard → `esphome.cloud` → **Email** → **Email Routing**.
 2. Click **Get started**. CF auto-creates these DNS records:
@@ -84,7 +212,7 @@ dig +short MX esphome.cloud
 # Should arrive at the founder inbox within ~10s. No auto-reply yet (Step 3 wires that).
 ```
 
-## Step 2 — Add DKIM + DMARC (10 min, optional but recommended)
+### Step B.2 — Add DKIM + DMARC (10 min, optional but recommended)
 
 These records make outbound auto-replies pass spam checks at the recipient.
 
@@ -103,7 +231,7 @@ Verify with `https://www.mail-tester.com/` (free; send mail from
 ai-triage@esphome.cloud to the unique address it gives you, get a score).
 Target ≥9/10 before declaring done.
 
-## Step 3 — Deploy the Email Worker for auto-replies (20 min)
+### Step B.3 — Deploy the Email Worker for auto-replies (20 min)
 
 The Worker code is at `cloudflare-worker/email-router.js` in this repo. It:
 
@@ -143,19 +271,45 @@ The 4 inbound mailboxes are done. The OUTBOUND pager (security_critical
 → ALERT_EMAIL) needs its own SMTP credentials. The placeholders set
 earlier need to become real values.
 
-**Recommended outbound path:** MailChannels via the same Cloudflare Worker.
-Add a second Worker route for `/pager/send` that triages.py calls instead
-of SMTP. (Future Phase 0.5 improvement; see ADR-008 T1 thinking.)
+### Recommended for the DNSPod + TEE founder: use 163.com SMTP-SSL
 
-**Practical interim path:** use any SMTP provider's free tier for the pager
-only. Mailgun's free tier gives 100 emails/mo — plenty for security pages.
+If your founder primary inbox is `<user>@163.com`, you already have free
+authenticated SMTP-SSL on port 465. Wire it directly — no separate provider
+or per-email cost.
 
-Once the SMTP provider is set up:
+1. Log in to <https://mail.163.com> → 设置 / Settings → POP3/SMTP/IMAP →
+   enable SMTP service.
+2. Click "客户端授权密码" / "Client authorization password" → generate one
+   (NOT your account password — this is the 16-char app token).
+3. Set GH Secrets:
+
 ```bash
-gh secret set SMTP_HOST     --repo esphome-cloud/community --body 'smtp.mailgun.org'
-gh secret set SMTP_USER     --repo esphome-cloud/community --body 'postmaster@<your-mg-domain>'
-gh secret set SMTP_PASSWORD --repo esphome-cloud/community --body '<provider-issued-password>'
-gh secret set ALERT_EMAIL   --repo esphome-cloud/community --body 'founder@163.com'
+gh secret set SMTP_HOST     --repo esphome-cloud/community --body 'smtp.163.com'
+gh secret set SMTP_USER     --repo esphome-cloud/community --body '<founder-user>@163.com'
+gh secret set SMTP_PASSWORD --repo esphome-cloud/community --body '<the 16-char auth password from step 2>'
+gh secret set ALERT_EMAIL   --repo esphome-cloud/community --body '<founder-user>@163.com'
+```
+
+Note: 163.com SMTP-SSL is port 465 — matches the `smtplib.SMTP_SSL(host, 465)`
+call hardcoded in `scripts/triage.py`. No code change needed.
+
+### Alternative: outlook.com SMTP
+
+`smtp-mail.outlook.com:587` (STARTTLS, not SSL). Requires changing
+`smtplib.SMTP_SSL(SMTP_HOST, 465)` in `scripts/triage.py` to
+`smtplib.SMTP(SMTP_HOST, 587)` + `smtp.starttls()`. Not recommended
+unless you have a specific reason to avoid 163.com.
+
+### Alternative: dedicated transactional provider
+
+If you don't want the pager to be tied to your personal mailbox:
+
+```bash
+# Mailgun free tier (100 emails/mo)
+gh secret set SMTP_HOST     --body 'smtp.mailgun.org'
+gh secret set SMTP_USER     --body 'postmaster@<your-mg-domain>'
+gh secret set SMTP_PASSWORD --body '<provider-issued-password>'
+gh secret set ALERT_EMAIL   --body '<founder-user>@163.com'
 ```
 
 ## Step 5 — Verify end-to-end (15 min)
