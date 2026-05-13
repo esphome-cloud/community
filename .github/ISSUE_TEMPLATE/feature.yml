@@ -1,0 +1,61 @@
+# Phase 1 Task 1.1 + IC-7 (interface contract) + V-ADR-001-V4.
+#
+# REQUIRED INVARIANT (Task 1.1 acceptance #4):
+#   markdown_reminder MUST contain literal "out of scope"
+#   AND at least one of: OTA, device management, team collaboration, IoT platform features.
+# Enforced by tests/repo/feature_template_mission.sh.
+
+name: 💡 Feature Request
+description: Suggest a new capability or improvement.
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion! Before filing, a quick scope reminder:
+
+        **What is out of scope** for the esphome.cloud BETA: OTA fleet management,
+        multi-device production fleet ops, team collaboration features (multi-tenant
+        organizations / RBAC), and generic IoT platform features beyond single-device
+        wizard → build → flash.
+
+        Other capabilities are fair game. The AI triage assistant will route this to
+        the founder for review during Tuesday office hours (14:00-16:00 UTC+8).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you solving?
+      description: Describe the user-side pain. Skip the proposed solution for now — that comes next.
+      placeholder: |
+        Example: "I prototype configurations in the wizard but want them version-controlled, so PR review can catch mistakes before flash."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution (optional)
+      description: If you have a specific shape in mind, sketch it here. If you don't, that's fine — we'll explore in Discussions.
+      placeholder: |
+        Example: "Add an 'Export to YAML' button in the wizard that emits a config the CLI can re-import losslessly."
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered (optional)
+      description: What have you tried so far, or what workarounds do you currently use?
+
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who is this for? (optional)
+      description: Helps us understand who benefits — solo hobbyist, small shop, classroom, etc.
+      options:
+        - Solo hobbyist / personal project
+        - Small embedded shop (1-5 devs)
+        - Educator / classroom
+        - Research / academic
+        - Commercial / production deployment
+        - Other

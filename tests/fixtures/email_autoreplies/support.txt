@@ -1,0 +1,19 @@
+Subject: Support request received
+
+Thank you for reaching out to esphome.cloud / community support.
+
+This mailbox serves paid support contracts only. Coverage is business
+office hours Mon-Fri 09:00-18:00 UTC+8 (not 24-hour); outside that window
+requests queue until the next business day. Per-tier response windows:
+
+  Pro tier:          response within 4 hours, Mon-Fri 09:00-18:00 UTC+8
+  Pro+ tier:         response within 2 hours, Mon-Fri 09:00-18:00 UTC+8
+  Business tier:     response within 1 hour,  Mon-Fri 09:00-18:00 UTC+8
+  Self-hosted tier:  response per contract,   Mon-Fri 09:00-18:00 UTC+8
+
+BETA NOTICE: paid support is not generally available during BETA.
+This mailbox is provided to existing Self-hosted contract partners only.
+If you reached this address by mistake and your inquiry is general, please
+re-send to hello@esphome.cloud instead.
+
+— The esphome.cloud / community support desk

@@ -1,0 +1,24 @@
+Subject: We received your feedback (and please use GitHub)
+
+Thank you for writing to esphome.cloud / community.
+
+This mailbox is monitored, but for almost everything you might want to file,
+GitHub is faster, more visible to other users, and gets you an AI-assisted
+first reply within ~90 seconds:
+
+  Bug reports + feature requests:
+    https://github.com/esphome-cloud/community/issues
+
+  Questions + ideas + showcase:
+    https://github.com/esphome-cloud/community/discussions
+
+Human follow-up on those channels happens Tuesday during office hours
+(14:00-16:00 UTC+8). One window per week, no realtime chat.
+
+If your message is security-related, please re-send to security@esphome.cloud
+(24-hour acknowledgement SLA — every day, not just Tuesday).
+
+If your message is private, commercial, or partnership-related, that should
+go to hello@esphome.cloud.
+
+— The esphome.cloud / community auto-responder

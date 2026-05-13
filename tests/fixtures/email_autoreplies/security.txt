@@ -1,0 +1,20 @@
+Subject: Security issue received (24-hour acknowledgement SLA)
+
+Thank you for reporting a security or privacy concern.
+
+We acknowledge security reports within 24 hours, every day (not just office
+hours). Initial response will include either a triaged severity, a request
+for clarifying information, or a coordinated disclosure timeline.
+
+We follow coordinated disclosure. If you have not already, please include:
+
+  - A short description of the issue
+  - Steps to reproduce (or a proof-of-concept if available)
+  - Your assessment of impact and affected components
+  - Your preferred contact channel for the disclosure thread
+  - Whether we should publicly credit you on resolution (with consent)
+
+We will not disclose details publicly until a fix is shipped and you have
+been given the opportunity to coordinate disclosure timing.
+
+— The esphome.cloud / community security desk

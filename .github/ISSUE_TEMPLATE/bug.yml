@@ -1,0 +1,87 @@
+# Phase 1 Task 1.1 + IC-6 (interface contract).
+# Shape: name + title prefix + 2 default labels (`bug`, `needs-triage`) + 7 fields.
+# `needs-triage` is REQUIRED so ai-triage.yml picks the issue up; do not remove.
+
+name: 🐛 Bug Report
+description: Something is broken in shipped behavior of esphome.cloud.
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. The AI triage assistant will read this within ~90 seconds and
+        either reply with a known-issue fix, ask for missing info, or flag it for human review.
+        Human follow-up happens Tuesday 14:00-16:00 UTC+8 (office hours).
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: One-paragraph summary of the bad behavior. Include the unexpected vs expected outcome.
+      placeholder: |
+        Example: "Browser wizard freezes for ~30s after clicking Generate, then errors with 'Job ID timeout'."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Minimum sequence a stranger could follow to reproduce the bug. Numbered list is ideal.
+      placeholder: |
+        1. Open esphome.cloud/wizard
+        2. Select ESP32-S3 + LED-strip solution
+        3. Click "Generate"
+        4. After ~30s see the error
+    validations:
+      required: true
+
+  - type: input
+    id: job-id
+    attributes:
+      label: Job ID (if applicable)
+      description: From the failed run's output (`job_abcd1234`). Massively speeds up our investigation.
+      placeholder: job_abcd1234
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did this happen?
+      description: Pick the closest match. We use this to route to the right area/* label.
+      options:
+        - Browser wizard (esphome.cloud)
+        - MCP Console (browser-side)
+        - Local MCP server (Claude Code / Cursor / etc.)
+        - espctl CLI
+        - Aegis agent (remote build)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: target
+    attributes:
+      label: Target chip / board (optional)
+      description: e.g. ESP32-S3 DevKitC, ESP32-C3 super-mini. Skip if not applicable.
+
+  - type: dropdown
+    id: client
+    attributes:
+      label: AI client (optional)
+      description: Which AI tooling are you using? Helps us reproduce against the same client.
+      options:
+        - Not using AI
+        - Claude Code
+        - Cursor
+        - Codex CLI
+        - OpenCode
+        - Claude Desktop
+        - Other
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant log output. Will be rendered as a shell code block. Strip any secrets first.
+      render: shell

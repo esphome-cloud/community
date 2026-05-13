@@ -1,0 +1,44 @@
+# Phase 1 Task 1.1 + IC-8 (interface contract).
+# job-id is REQUIRED — high-frequency cases need traceable evidence.
+
+name: 🔥 Build Failed
+description: An esphome.cloud remote build failed when it should have succeeded.
+title: "[Build Failed]: "
+labels: ["build-failure", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Build failures need a Job ID to trace. Without it we can't reproduce on our side.
+        If you don't have a Job ID handy, file as a regular `🐛 Bug Report` instead.
+
+  - type: input
+    id: job-id
+    attributes:
+      label: Job ID
+      description: The `job_*` ID printed at the start of the failed build (e.g. `job_abcd1234`).
+      placeholder: job_abcd1234
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error
+      description: Paste the last 30 lines of the build log. Rendered as shell. Strip secrets first.
+      render: shell
+    validations:
+      required: true
+
+  - type: dropdown
+    id: when
+    attributes:
+      label: When did this start failing?
+      description: Helps us correlate against deploys on our side.
+      options:
+        - First time I've built this project
+        - Used to work; broke recently (within the last 24 hours)
+        - First failure of the day
+        - Random / intermittent
+    validations:
+      required: true

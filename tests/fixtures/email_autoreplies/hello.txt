@@ -1,0 +1,23 @@
+Subject: Hello — and a quick note on response times
+
+Thanks for writing to hello@esphome.cloud.
+
+This mailbox is for things that should not be public: Self-hosted contract
+inquiries, partnership conversations, press requests, and other private
+matters.
+
+A few quick redirects so the right things end up in the right places:
+
+  Bug reports + feature requests:
+    https://github.com/esphome-cloud/community/issues
+
+  Questions + ideas + showcase:
+    https://github.com/esphome-cloud/community/discussions
+
+  Security or privacy reports:
+    security@esphome.cloud (24-hour acknowledgement SLA)
+
+For anything that belongs here, a human replies on the Tuesday office hours
+window (14:00-16:00 UTC+8). One window per week — no realtime expectations.
+
+— The esphome.cloud / community founder mailbox auto-responder

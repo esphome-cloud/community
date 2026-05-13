@@ -1,0 +1,34 @@
+# Phase 1 Task 1.1 — issue template chooser config.
+#
+# blank_issues_enabled: false forces every new Issue through one of the
+# templates below, so the AI triage pipeline always has a structured payload
+# to classify (per IC-6/IC-7/IC-8 + ADR-002's three-channel mutual exclusion).
+#
+# contact_links route non-Issue intents to the correct channel — they appear
+# below the template list as "Don't see your issue here?" alternatives.
+# Per ADR-001 the project has no realtime chat channel; do NOT add any
+# closed-platform chat link here (see ADR-001 for the canonical banned-string
+# list enforced by tests/repo/no_closed_channels.sh).
+
+blank_issues_enabled: false
+
+contact_links:
+  - name: 🙏 Ask a question
+    url: https://github.com/esphome-cloud/community/discussions/categories/q-a
+    about: Usage / how-to questions belong in Discussions Q&A, not Issues.
+
+  - name: 💡 Share an idea (pre-feature-request)
+    url: https://github.com/esphome-cloud/community/discussions/categories/ideas
+    about: Brainstorming and feature seedlings go to Discussions Ideas first; promote to an Issue once the shape is clear.
+
+  - name: 🔒 Report a security concern
+    url: mailto:security@esphome.cloud
+    about: Security and privacy reports go to security@ for coordinated disclosure (24-hour acknowledgement SLA).
+
+  - name: 💼 Private / commercial / partnership / press
+    url: mailto:hello@esphome.cloud
+    about: Anything that should not be public. Response on Tuesday office hours (14:00-16:00 UTC+8).
+
+  - name: 🇨🇳 Gitee mirror (read-only)
+    url: https://gitee.com/esphome-cloud/community
+    about: For users behind the GFW. Issues still file here on GitHub; the Gitee mirror exists so source + docs remain reachable.
