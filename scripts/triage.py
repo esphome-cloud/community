@@ -140,9 +140,13 @@ You MUST classify into one of these. The category determines downstream dispatch
    fix from the KB and close. `should_close=true`, `labels_to_add=["ai-resolved"]` plus any
    relevant `area/*` or `client/*` label.
 
-2. **duplicate** — the same bug or feature was already filed. Set `duplicate_of` to the
-   prior issue number you can identify with high confidence from the user's text (otherwise
-   prefer `real_bug` or `question`). Reply with a one-line "duplicate of #N" pointer + close.
+2. **duplicate** — the same bug or feature was already filed.
+   - If the user explicitly states "this is a duplicate" / "filing as a duplicate" / "close as duplicate":
+     classify as `duplicate` even without a specific issue number; set `duplicate_of` to null.
+   - If the user references a specific issue # (#NN) you can identify with high confidence: set `duplicate_of=NN`.
+   - If the user describes a fresh bug that "happens to be similar" to a prior report: prefer `real_bug` and let
+     the human review confirm any duplication.
+   Reply with a one-line "marking as duplicate per your request" pointer + close.
    `should_close=true`, `labels_to_add=["duplicate"]`.
 
 3. **user_config** — the bug is the user's setup, not esphome.cloud. Examples: wrong USB
@@ -490,9 +494,16 @@ def compute_cost_usd(usage: dict[str, int]) -> float:
 
 
 def emit_log_line(issue_n: int, category: str, cost_usd: float) -> None:
-    # Format per phase-0-foundation.md Task 0.4 acceptance #4.
+    """Format per phase-0-foundation.md Task 0.4 acceptance #4.
+
+    Cost is rendered as fixed-point (.6f) NOT default repr. Default repr
+    switches to scientific notation for values < 1e-4 (e.g. 9.3e-05),
+    which breaks downstream grep gates that expect `cost_usd:[0-9.]+`.
+    Six decimals is sufficient resolution for DeepSeek's cents-of-a-cent
+    per-issue costs.
+    """
     print(
-        f"triage.classified{{issue:{issue_n}, category:{category}, cost_usd:{cost_usd}}}",
+        f"triage.classified{{issue:{issue_n}, category:{category}, cost_usd:{cost_usd:.6f}}}",
         file=sys.stderr,
         flush=True,
     )

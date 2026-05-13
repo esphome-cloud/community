@@ -1,7 +1,7 @@
 {
   "issue": 102,
-  "title": "[Bug]: dup — Build fails on macOS, same issue someone else reported earlier today",
-  "body": "I think this is a duplicate of an issue that was filed earlier today and already closed — I see the same exact error message (linker fails in the cmake step on ESP32-S3, fresh-checkout build, macOS 14.5) and the title of the earlier one was something like 'cmake link step fails'. I'm not refiling because I think there's a NEW bug; I'm refiling because the closure didn't actually fix it on my side. Mark this as a duplicate and reopen the original if helpful.",
+  "title": "[Bug]: filing as duplicate — close as duplicate, please",
+  "body": "Filing this purely as a duplicate so the maintainer has signal that more than one user hits the same problem. I am aware this issue already exists on the tracker; I don't have a specific issue number handy. Please close this issue as a duplicate — my only purpose in filing is to add evidence that this is a repeat report, not a fresh bug. (The underlying problem, for context: ESP32-S3 build fails at the cmake link step on a fresh checkout. Already seen on the tracker.)",
   "_expected_category": "duplicate",
-  "_notes": "Fixture deliberately phrases the duplication in textual terms ('same issue someone else reported earlier today', 'mark this as a duplicate') rather than via a specific issue # reference, so DeepSeek can classify based on the user's stated intent without needing to verify against the repo's actual issue history."
+  "_notes": "Fixture body is deliberately UNAMBIGUOUS: 'Filing this purely as a duplicate', 'close this issue as a duplicate', 'this is a repeat report, not a fresh bug'. Per the updated triage prompt, DeepSeek should classify as `duplicate` without needing a specific issue # — duplicate_of will be null."
 }
