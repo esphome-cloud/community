@@ -1,0 +1,99 @@
+name: Mirror to Gitee
+
+# Phase 2 Task 2.2 — one-way read-only mirror from GitHub → Gitee per ADR-004.
+# Gitee is a SOURCE-OF-TRUTH SINK ONLY; commits are never accepted from Gitee.
+#
+# Why no third-party action: Yikun/hub-mirror-action and similar mirror actions
+# have been variously abandoned / archived / deprecated across 2024-2026. A
+# manual git-push loop avoids the maintenance lottery and gives us explicit
+# control over branch exclusions (private/* per V-Phase-02 forbidden-behavior).
+#
+# Triggers:
+#   - push.branches[**] + push.tags[**]: realtime mirror on every commit/tag
+#   - schedule.cron '0 */6 * * *': belt-and-suspenders 6h fallback if a push
+#     event was missed (rare but possible during GHA outage)
+#   - workflow_dispatch: manual re-mirror for runbook recovery
+#
+# Drift guarantee: <=6h + workflow runtime (~10min). Enforced by
+# tests/perf/mirror_drift.sh.
+
+on:
+  push:
+    branches: ['**']
+    tags: ['**']
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mirror-to-gitee
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # full history needed for git push --force-with-lease
+
+      - name: Configure dedicated Gitee SSH key
+        env:
+          GITEE_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          # Heredoc'd to avoid shell-history exposure on the runner.
+          install -m 600 /dev/stdin ~/.ssh/gitee_mirror <<<"$GITEE_PRIVATE_KEY"
+          ssh-keyscan -t ed25519,rsa gitee.com >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/gitee_mirror ~/.ssh/known_hosts
+
+      - name: Add Gitee remote
+        run: |
+          git remote add gitee git@gitee.com:esphome-cloud/community.git
+          git remote -v
+
+      - name: Push branches (excluding private/*)
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/gitee_mirror -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes
+        run: |
+          set -euo pipefail
+          pushed=0
+          excluded=0
+          # Iterate refs/heads/* and skip private/* (V-Phase-02 forbidden-behavior).
+          for ref in $(git for-each-ref --format='%(refname:short)' refs/heads/); do
+            case "$ref" in
+              private/*)
+                echo "  [excluded] $ref"
+                excluded=$((excluded + 1))
+                ;;
+              *)
+                echo "  [push]     $ref"
+                git push --force gitee "refs/heads/${ref}:refs/heads/${ref}"
+                pushed=$((pushed + 1))
+                ;;
+            esac
+          done
+          echo "Pushed $pushed branch(es); excluded $excluded private/* branch(es)."
+
+      - name: Push tags
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/gitee_mirror -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes
+        run: |
+          set -euo pipefail
+          git push --force --tags gitee
+          tag_count=$(git tag -l | wc -l | tr -d ' ')
+          echo "Pushed $tag_count tag(s)."
+
+      - name: Emit mirror-complete log marker
+        run: |
+          timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+          # The marker that tests/integration/mirror_sync.sh + perf/mirror_drift.sh grep for.
+          echo "Mirrored to Gitee at $timestamp"
+
+      - name: Cleanup SSH key from runner
+        if: always()
+        run: rm -f ~/.ssh/gitee_mirror

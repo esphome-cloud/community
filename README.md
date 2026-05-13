@@ -65,11 +65,12 @@ For the BETA→GA roadmap and the criteria that gate progression, see
 
 ## Working from China (Gitee mirror)
 
-> Phase 2 work — full Chinese signup guide lands in Task 2.3.
+Read-only mirror at [`gitee.com/esphome-cloud/community`](https://gitee.com/esphome-cloud/community),
+synced every 6 hours. Per [ADR-004](governance/adr-004-github-source-of-truth.md), GitHub is
+the source of truth; Gitee carries source + docs + answered Q&A one-way. Filing happens on GitHub.
 
-Read-only mirror at `gitee.com/esphome-cloud/community`. Filing issues + starting discussions
-still happens on GitHub; the mirror exists so source, docs, and answered questions remain
-reachable behind the GFW.
+Chinese GitHub-signup + acceleration guide: [`docs/github-signup-cn.md`](docs/github-signup-cn.md).
+No-GitHub fallback: email `feedback@esphome.cloud`.
 
 ---
 
