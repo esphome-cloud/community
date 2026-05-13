@@ -80,11 +80,30 @@ run_trial() {
   start_iso=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
 
   echo "[trial $n/$TRIALS] creating issue '$title'"
-  local url num
-  url=$(gh issue create --repo "$REPO" --title "$title" --body "$body" --label needs-triage 2>/dev/null)
-  num=$(printf '%s' "$url" | awk -F/ '{print $NF}')
+  # gh issue create has been observed to EOF on flaky proxies (mihomo etc.).
+  # Retry up to 5 times with exponential backoff (2/4/8/16/32 = ~62s window).
+  # Print stderr on each fail so the user can distinguish proxy issues from
+  # real API errors.
+  local url num err
+  local -a delays=(2 4 8 16 32)
+  for attempt in 1 2 3 4 5; do
+    err=$(gh issue create --repo "$REPO" --title "$title" --body "$body" \
+              --label needs-triage 2>&1 >/tmp/.smoke_issue_url.$$)
+    if [ -s /tmp/.smoke_issue_url.$$ ]; then
+      url=$(cat /tmp/.smoke_issue_url.$$)
+      rm -f /tmp/.smoke_issue_url.$$
+      break
+    fi
+    if [ "$attempt" -lt 5 ]; then
+      sleep_s="${delays[$((attempt-1))]}"
+      echo "    (gh issue create attempt $attempt: ${err:0:120}; retrying in ${sleep_s}s)"
+      sleep "$sleep_s"
+    fi
+  done
+  num=$(printf '%s' "${url:-}" | awk -F/ '{print $NF}')
   if [ -z "$num" ]; then
-    echo "  FAIL: could not create issue"; return 1
+    echo "  FAIL: could not create issue after 5 attempts (last error: ${err:0:200})"
+    return 1
   fi
   created_issues+=("$num")
   echo "  created issue #$num"
@@ -127,13 +146,34 @@ run_trial() {
     echo "  FAIL: run $run_id did not complete within ${TIMEOUT_S}s (status=$status)"; return 1
   fi
 
-  # Grep the log for the smoke marker.
-  if gh run view "$run_id" --repo "$REPO" --log 2>/dev/null | grep -qF 'python ok'; then
+  # Grep the log for the smoke marker. Retry up to 5 times with exponential
+  # backoff (3/6/12/24/48 = ~93s window) — typical cause of failure is a proxy
+  # blip between the client and api.github.com (the run itself succeeded;
+  # only log retrieval is flaky). We distinguish "log truly missing marker"
+  # from "log fetch empty" by checking byte count separately from grep success.
+  local log_bytes log_out
+  local -a log_delays=(3 6 12 24 48)
+  for attempt in 1 2 3 4 5; do
+    log_out=$(gh run view "$run_id" --repo "$REPO" --log 2>/dev/null || true)
+    log_bytes=$(printf '%s' "$log_out" | wc -c | tr -d ' ')
+    if [ "$log_bytes" -gt 100 ]; then break; fi
+    if [ "$attempt" -lt 5 ]; then
+      sleep_s="${log_delays[$((attempt-1))]}"
+      echo "    (log fetch attempt $attempt returned $log_bytes bytes; retrying after ${sleep_s}s)"
+      sleep "$sleep_s"
+    fi
+  done
+
+  if [ "$log_bytes" -le 100 ]; then
+    echo "  FAIL: run $run_id log unfetchable after 5 attempts ($log_bytes bytes)"
+    return 1
+  fi
+  if printf '%s' "$log_out" | grep -qF 'python ok'; then
     echo "  PASS: trial $n round-trip ${elapsed}s, run $run_id, log contains 'python ok'"
     return 0
-  else
-    echo "  FAIL: run $run_id log does NOT contain 'python ok'"; return 1
   fi
+  echo "  FAIL: run $run_id log fetched ($log_bytes bytes) but missing 'python ok' marker"
+  return 1
 }
 
 for n in $(seq 1 "$TRIALS"); do

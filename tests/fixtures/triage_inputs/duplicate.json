@@ -1,7 +1,7 @@
 {
   "issue": 102,
-  "title": "[Bug]: Build fails on macOS — same as issue #50",
-  "body": "I'm hitting the exact same problem as in #50. The error message is identical, the macOS version is the same (14.4 → 14.5 minor diff but the failure mode is unchanged). Filing a new issue because that one was closed but the fix didn't seem to take in my case. Reproduction: build any ESP32-S3 project from a fresh checkout, get linker error in cmake step.",
+  "title": "[Bug]: dup — Build fails on macOS, same issue someone else reported earlier today",
+  "body": "I think this is a duplicate of an issue that was filed earlier today and already closed — I see the same exact error message (linker fails in the cmake step on ESP32-S3, fresh-checkout build, macOS 14.5) and the title of the earlier one was something like 'cmake link step fails'. I'm not refiling because I think there's a NEW bug; I'm refiling because the closure didn't actually fix it on my side. Mark this as a duplicate and reopen the original if helpful.",
   "_expected_category": "duplicate",
-  "_expected_duplicate_of": 50
+  "_notes": "Fixture deliberately phrases the duplication in textual terms ('same issue someone else reported earlier today', 'mark this as a duplicate') rather than via a specific issue # reference, so DeepSeek can classify based on the user's stated intent without needing to verify against the repo's actual issue history."
 }

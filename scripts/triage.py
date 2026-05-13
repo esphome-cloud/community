@@ -384,7 +384,7 @@ def classify(
         base_url=DEEPSEEK_BASE_URL,
     )
 
-    response = client.chat.completions.create(
+    request_kwargs = dict(
         model=MODEL,
         max_tokens=2048,
         # DeepSeek does NOT enforce json_schema — only json_object (free-form).
@@ -396,12 +396,20 @@ def classify(
         ],
     )
 
-    text = response.choices[0].message.content or ""
+    response = client.chat.completions.create(**request_kwargs)
+    text = (response.choices[0].message.content or "").strip()
+
+    # DeepSeek occasionally returns empty content on json_object mode.
+    # Retry once before giving up — empirically this clears most cases.
     if not text:
-        # DeepSeek occasionally returns empty content on json_object mode;
-        # re-raise so the workflow records a failure rather than silently
-        # producing a malformed decision.
-        raise RuntimeError("DeepSeek returned empty content; check prompt or retry.")
+        print("[triage] DeepSeek returned empty content; retrying once...", file=sys.stderr)
+        response = client.chat.completions.create(**request_kwargs)
+        text = (response.choices[0].message.content or "").strip()
+        if not text:
+            raise RuntimeError(
+                "DeepSeek returned empty content twice; check prompt or rate-limits."
+            )
+
     decision = json.loads(text)
 
     # DeepSeek usage fields. cache_hit + cache_miss = prompt_tokens.

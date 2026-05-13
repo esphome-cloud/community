@@ -110,19 +110,41 @@ run_trial() {
   # Title + body from the fixture, plus nonce so we can match the workflow run.
   local title body
   title=$(python3 -c "import json; print(json.load(open('$fixture_path'))['title'] + ' [smoke ${nonce}-${idx}]')")
+  # Note: the f-string variables are BASH-interpolated (escaped \$). The
+  # python f-string itself is not evaluating any python variables; the
+  # nonce + idx + expected_category come from bash via $-substitution.
   body=$(python3 -c "
 import json
 d = json.load(open('$fixture_path'))
 print(d['body'])
 print()
-print(f'<!-- phase0_smoke trial=${idx}/5 expected={expected_category} nonce=${nonce} -->')
+print('<!-- phase0_smoke trial=${idx}/5 expected=${expected_category} nonce=${nonce} -->')
 ")
 
-  local start_iso url issue_n
+  local start_iso url issue_n err
   start_iso=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
-  url=$(gh issue create --repo "$REPO" --title "$title" --body "$body" --label needs-triage 2>/dev/null)
-  issue_n=$(printf '%s' "$url" | awk -F/ '{print $NF}')
-  [ -n "$issue_n" ] || { echo "  [$idx] FAIL: could not create issue"; return 1; }
+  # Retry gh issue create with exponential backoff for proxy-EOF resilience.
+  # 5 attempts × {2,4,8,16,32}s = ~62s window. Matches the workflow_smoke.sh pattern.
+  local -a create_delays=(2 4 8 16 32)
+  for attempt in 1 2 3 4 5; do
+    err=$(gh issue create --repo "$REPO" --title "$title" --body "$body" \
+              --label needs-triage 2>&1 >/tmp/.p0_url.$$)
+    if [ -s /tmp/.p0_url.$$ ]; then
+      url=$(cat /tmp/.p0_url.$$)
+      rm -f /tmp/.p0_url.$$
+      break
+    fi
+    if [ "$attempt" -lt 5 ]; then
+      sleep_s="${create_delays[$((attempt-1))]}"
+      echo "  [$idx] (gh issue create attempt $attempt: ${err:0:100}; retrying ${sleep_s}s)"
+      sleep "$sleep_s"
+    fi
+  done
+  issue_n=$(printf '%s' "${url:-}" | awk -F/ '{print $NF}')
+  if [ -z "$issue_n" ]; then
+    echo "  [$idx] FAIL: could not create issue after 5 attempts (last error: ${err:0:200})"
+    return 1
+  fi
   created_issues+=("$issue_n")
   echo "  [$idx] $expected_category → issue #$issue_n created"
 
@@ -151,13 +173,30 @@ print(f'<!-- phase0_smoke trial=${idx}/5 expected={expected_category} nonce=${no
   done
 
   # Pull the log; expect a triage.classified line. Capture cost_usd.
-  local log marker_line actual_cat actual_cost
-  log=$(gh run view "$run_id" --repo "$REPO" --log 2>/dev/null || true)
+  # Retry the log fetch up to 5 times × {3,6,12,24,48}s backoff (~93s window)
+  # to absorb proxy-EOF blips between client and api.github.com.
+  local log log_bytes marker_line actual_cat actual_cost
+  local -a log_delays=(3 6 12 24 48)
+  for attempt in 1 2 3 4 5; do
+    log=$(gh run view "$run_id" --repo "$REPO" --log 2>/dev/null || true)
+    log_bytes=$(printf '%s' "$log" | wc -c | tr -d ' ')
+    [ "$log_bytes" -gt 100 ] && break
+    if [ "$attempt" -lt 5 ]; then
+      sleep_s="${log_delays[$((attempt-1))]}"
+      echo "  [$idx] (log fetch attempt $attempt returned $log_bytes bytes; retrying ${sleep_s}s)"
+      sleep "$sleep_s"
+    fi
+  done
+
   marker_line=$(printf '%s' "$log" \
                 | grep -oE "triage\.classified\{issue:${issue_n}, category:[a-z_]+, cost_usd:[0-9.]+\}" \
                 | head -1)
   if [ -z "$marker_line" ]; then
-    echo "  [$idx] FAIL: no 'triage.classified{issue:${issue_n}...}' marker in log"
+    if [ "$log_bytes" -le 100 ]; then
+      echo "  [$idx] FAIL: log unfetchable after 5 attempts ($log_bytes bytes — proxy?)"
+    else
+      echo "  [$idx] FAIL: no 'triage.classified{issue:${issue_n}...}' marker in log ($log_bytes bytes fetched)"
+    fi
     fail_detail+=("issue=$issue_n run=$run_id reason=no-marker")
     append_state "$issue_n" "$run_id" "$expected_category" ""
     return 1
