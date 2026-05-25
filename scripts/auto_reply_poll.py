@@ -46,6 +46,10 @@ DOMAIN = "esphome.cloud"
 SMTP_FROM = "ai-triage@esphome.cloud"
 PROCESSED_FOLDER = "AutoReplied"  # top-level — 163.com forbids subfolders under INBOX
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "email_autoreplies"
+# Persist the highest INBOX UID we've finished processing. 163's webmail marks
+# any clicked mail \Seen at the IMAP level, so a UID watermark is more reliable
+# than (UNSEEN) search for "what's new since last poll".
+STATE_FILE = Path(os.environ.get("STATE_FILE", "/opt/aegis-auto-reply/last_uid.txt"))
 
 
 def parse_fixture(path: Path) -> tuple[str, str]:
@@ -183,6 +187,15 @@ def main() -> int:
     except Exception as exc:
         print(f"[warn] IMAP ID extension failed (non-fatal): {exc}", file=sys.stderr)
 
+    # Load state — first run after deployment has no state file → bootstrap.
+    bootstrap = not STATE_FILE.exists()
+    last_uid = 0
+    if not bootstrap:
+        try:
+            last_uid = int(STATE_FILE.read_text().strip())
+        except (ValueError, OSError):
+            last_uid = 0
+
     partial_failures = 0
     try:
         # Ensure processed folder exists (idempotent).
@@ -196,30 +209,53 @@ def main() -> int:
             print("FAIL: cannot SELECT INBOX", file=sys.stderr)
             return 2
 
-        typ, data = m.search(None, "(UNSEEN)")
+        if bootstrap:
+            # First run after deployment: pin watermark to current max UID;
+            # process nothing this tick. Future ticks process only new mail.
+            typ, data = m.uid("SEARCH", None, "ALL")
+            all_uids = data[0].split() if typ == "OK" and data and data[0] else []
+            current_max = max((int(u) for u in all_uids), default=0)
+            _save_state(current_max)
+            print(f"bootstrap: pinned last_uid to {current_max}; processed 0 messages this tick")
+            return 0
+
+        # UID-based search ignores \Seen state entirely — robust against
+        # 163 webmail marking mail SEEN before our cron runs.
+        typ, data = m.uid("SEARCH", None, f"UID {last_uid + 1}:*")
         if typ != "OK":
-            print(f"FAIL: IMAP search returned {typ}", file=sys.stderr)
+            print(f"FAIL: UID SEARCH returned {typ}", file=sys.stderr)
             return 2
 
-        ids = data[0].split()
-        print(f"polled INBOX: {len(ids)} UNSEEN message(s)")
+        # IMAP servers return all UIDs when there's no UID > N. Defensive filter.
+        raw_uids = data[0].split() if data and data[0] else []
+        uids = sorted([u for u in raw_uids if int(u) > last_uid], key=lambda u: int(u))
+
+        print(f"polled INBOX: {len(uids)} new message(s) since UID {last_uid}")
 
         replies_sent = 0
-        for msg_id in ids:
+        max_uid_seen = last_uid
+        for msg_id in uids:
             mid = msg_id.decode()
             try:
-                # BODY.PEEK[] = read without setting \\Seen. Plain RFC822 fetch
-                # auto-marks SEEN, which would silently consume non-matching
-                # messages and prevent re-processing if detect_alias() ever
-                # changes.
-                typ, msg_data = m.fetch(msg_id, "(BODY.PEEK[])")
+                # BODY.PEEK[] = read without setting \Seen. Plain RFC822 fetch
+                # auto-marks SEEN; not load-bearing for our UID-based polling
+                # but still good hygiene if the script's logic ever regresses.
+                typ, msg_data = m.uid("FETCH", mid, "(BODY.PEEK[])")
             except Exception as exc:
-                print(f"  msg {mid}: fetch failed: {exc}", file=sys.stderr)
+                print(f"  uid {mid}: fetch raised: {exc}", file=sys.stderr)
+                partial_failures += 1
+                # Don't advance watermark — let next run retry this UID.
+                continue
+            if typ != "OK":
+                print(f"  uid {mid}: fetch returned {typ}", file=sys.stderr)
                 partial_failures += 1
                 continue
-            if typ != "OK" or not msg_data or not msg_data[0]:
-                print(f"  msg {mid}: fetch returned {typ}", file=sys.stderr)
-                partial_failures += 1
+            if not msg_data or not msg_data[0]:
+                # 163.com sometimes returns OK with no body (deleted slot,
+                # message expunged between SEARCH and FETCH, etc.). Benign —
+                # advance watermark + skip without counting as failure.
+                print(f"  uid {mid}: empty body (server quirk); benign skip")
+                max_uid_seen = max(max_uid_seen, int(mid))
                 continue
 
             raw = msg_data[0][1]
@@ -227,12 +263,14 @@ def main() -> int:
 
             alias = detect_alias(msg)
             if not alias:
-                print(f"  msg {mid}: skip (no esphome.cloud alias in headers)")
+                print(f"  uid {mid}: skip (no esphome.cloud alias in headers)")
+                max_uid_seen = max(max_uid_seen, int(mid))
                 continue
 
             skip, why = should_skip(msg)
             if skip:
-                print(f"  msg {mid} ({alias}@): skip — {why}")
+                print(f"  uid {mid} ({alias}@): skip — {why}")
+                max_uid_seen = max(max_uid_seen, int(mid))
                 continue
 
             subject, body = fixtures[alias]
@@ -240,28 +278,38 @@ def main() -> int:
             try:
                 send_reply(msg, subject, body, smtp_host, smtp_user, smtp_pass)
                 replies_sent += 1
-                print(f"  msg {mid} ({alias}@): REPLIED → {sender}")
+                print(f"  uid {mid} ({alias}@): REPLIED → {sender}")
             except Exception as exc:
-                print(f"  msg {mid} ({alias}@): SMTP failed: {exc}", file=sys.stderr)
+                print(f"  uid {mid} ({alias}@): SMTP failed: {exc}", file=sys.stderr)
                 partial_failures += 1
-                continue  # leave UNSEEN; next cron tick retries
+                # Don't advance watermark — next run retries.
+                continue
 
             # Move to processed folder (idempotency belt+suspenders).
             try:
-                m.copy(msg_id, PROCESSED_FOLDER)
-                m.store(msg_id, "+FLAGS", "\\Deleted")
+                m.uid("COPY", mid, PROCESSED_FOLDER)
+                m.uid("STORE", mid, "+FLAGS", "\\Deleted")
             except Exception as exc:
-                print(f"  msg {mid}: move failed: {exc}; marking SEEN as fallback",
+                print(f"  uid {mid}: move failed: {exc}; marking SEEN as fallback",
                       file=sys.stderr)
-                m.store(msg_id, "+FLAGS", "\\Seen")
-                partial_failures += 1
+                try:
+                    m.uid("STORE", mid, "+FLAGS", "\\Seen")
+                except Exception:
+                    pass
+                # Auto-reply already sent; advance watermark so next run skips.
+
+            max_uid_seen = max(max_uid_seen, int(mid))
 
         try:
             m.expunge()
         except Exception:
             pass
 
-        total = len(ids)
+        if max_uid_seen > last_uid:
+            _save_state(max_uid_seen)
+            print(f"updated last_uid: {last_uid} → {max_uid_seen}")
+
+        total = len(uids)
         print(f"\nsummary: {replies_sent}/{total} replied, {partial_failures} partial failure(s)")
         return 1 if partial_failures else 0
     finally:
@@ -269,6 +317,14 @@ def main() -> int:
             m.logout()
         except Exception:
             pass
+
+
+def _save_state(uid: int) -> None:
+    """Atomically persist the last-processed UID."""
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    tmp = STATE_FILE.with_suffix(STATE_FILE.suffix + ".tmp")
+    tmp.write_text(f"{uid}\n")
+    tmp.replace(STATE_FILE)
 
 
 if __name__ == "__main__":
