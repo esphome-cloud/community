@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Idempotently provisions the 7 GitHub Secrets on the live repo.
+# Idempotently provisions the 8 GitHub Secrets on the live repo.
 #
 # Secret values come from one of:
 #   1. Interactive prompt (default; values typed/pasted, never echoed)
@@ -11,7 +11,7 @@
 #   ./scripts/setup-secrets.sh --from-file .secrets-input
 #   REPO=my-org/my-repo ./scripts/setup-secrets.sh
 #
-# Exit: 0 = all 7 set; non-zero = at least one failure or aborted.
+# Exit: 0 = all 8 set; non-zero = at least one failure or aborted.
 
 set -euo pipefail
 
@@ -53,6 +53,7 @@ SECRETS=(
   SMTP_HOST
   SMTP_USER
   SMTP_PASSWORD
+  IMAP_PASSWORD
   GITEE_TOKEN
   GITEE_PRIVATE_KEY
 )
@@ -64,7 +65,8 @@ describe() {
     ALERT_EMAIL)       echo "founder@... mailbox that receives [CRITICAL] pager emails" ;;
     SMTP_HOST)         echo "smtp.example.com  outbound SMTP-SSL :465 host for the pager" ;;
     SMTP_USER)         echo "ai-triage@esphome.cloud  SMTP login user" ;;
-    SMTP_PASSWORD)     echo "SMTP login password (or app-specific token)" ;;
+    SMTP_PASSWORD)     echo "SMTP login password (or app-specific token / Resend API key)" ;;
+    IMAP_PASSWORD)     echo "IMAP authorization code for the founder's primary inbox (e.g. 163 'client authorization code'); used by auto-reply.yml" ;;
     GITEE_TOKEN)       echo "Gitee personal access token for mirror-to-gitee workflow (Phase 2)" ;;
     GITEE_PRIVATE_KEY) echo "SSH private key for Gitee push mirror (Phase 2)" ;;
     *)                 echo "" ;;
