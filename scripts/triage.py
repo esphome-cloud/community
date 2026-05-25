@@ -550,8 +550,12 @@ def send_pager_email(
         print(f"[pager] missing env var {exc!r}; pager skipped", file=sys.stderr)
         return
 
+    # Resend's SMTP relay requires a literal "resend" username distinct from the
+    # display From: address; TEE and most other providers use the same value for both.
+    smtp_from = os.environ.get("SMTP_FROM", "ai-triage@esphome.cloud")
+
     msg = EmailMessage()
-    msg["From"]    = smtp_user
+    msg["From"]    = smtp_from
     msg["To"]      = alert_email
     msg["Subject"] = f"[CRITICAL] esphome.cloud issue #{issue_n}"
     msg.set_content(
