@@ -208,7 +208,11 @@ def main() -> int:
         for msg_id in ids:
             mid = msg_id.decode()
             try:
-                typ, msg_data = m.fetch(msg_id, "(RFC822)")
+                # BODY.PEEK[] = read without setting \\Seen. Plain RFC822 fetch
+                # auto-marks SEEN, which would silently consume non-matching
+                # messages and prevent re-processing if detect_alias() ever
+                # changes.
+                typ, msg_data = m.fetch(msg_id, "(BODY.PEEK[])")
             except Exception as exc:
                 print(f"  msg {mid}: fetch failed: {exc}", file=sys.stderr)
                 partial_failures += 1
