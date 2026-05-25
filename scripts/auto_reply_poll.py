@@ -63,21 +63,32 @@ def parse_fixture(path: Path) -> tuple[str, str]:
 def detect_alias(msg: email.message.Message) -> str | None:
     """Return the matched alias (feedback/security/hello/support) or None.
 
-    Inspect To, Delivered-To, X-Forwarded-To, X-ImprovMX-To, X-Original-To
-    headers — different forwarders put the original recipient in different
-    fields. ai-triage is intentionally NOT a public-facing alias (it's our
-    outbound sender), so we don't auto-reply to it.
+    Forwarders put the original recipient in different headers (Delivered-To,
+    X-Forwarded-To, X-Original-To, X-ImprovMX-Email, Envelope-To, ...). Rather
+    than enumerate every variant, we substring-scan ALL recipient-shaped
+    headers — explicit `To`/`Cc`/`Delivered-To`/`Envelope-To` plus the broad
+    `X-*` namespace (excluding known X-noise headers like X-Mailer/X-Spam).
+    ai-triage is intentionally NOT in the PUBLIC set (it's our outbound
+    sender), so we don't auto-reply to it.
     """
-    PUBLIC = {"feedback", "security", "hello", "support"}
-    for h in ("To", "Delivered-To", "X-Forwarded-To", "X-ImprovMX-To", "X-Original-To"):
-        for value in msg.get_all(h, []):
-            _, addr = parseaddr(value)
-            addr = addr.lower()
-            if "@" not in addr:
-                continue
-            local, _, host = addr.partition("@")
-            if host == DOMAIN and local in PUBLIC:
-                return local
+    PUBLIC = ("feedback", "security", "hello", "support")
+    EXACT_RECIPIENT_HEADERS = {"to", "cc", "delivered-to", "envelope-to"}
+    X_NOISE_PREFIXES = (
+        "x-mailer", "x-priority", "x-spam", "x-msmail", "x-mimeole",
+        "x-virus", "x-antiabuse", "x-dcc", "x-uidl", "x-mta",
+    )
+    for h_name, h_val in msg.items():
+        lower_name = h_name.lower()
+        is_recipient_header = (
+            lower_name in EXACT_RECIPIENT_HEADERS
+            or (lower_name.startswith("x-") and not any(lower_name.startswith(p) for p in X_NOISE_PREFIXES))
+        )
+        if not is_recipient_header:
+            continue
+        v_lower = h_val.lower()
+        for alias in PUBLIC:
+            if f"{alias}@{DOMAIN}" in v_lower:
+                return alias
     return None
 
 
