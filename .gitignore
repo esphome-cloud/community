@@ -45,3 +45,9 @@ core.*
 build/
 dist/
 target/
+
+# Transient evidence / state dirs (smoke / soak runs — per-run JSONs, never
+# committed; the committed source of truth is the ledger + retro docs)
+.smoke-state/
+.soak-state/
+.hil-state/
