@@ -21,13 +21,14 @@ Architectural decisions for the `esphome-cloud/community` feedback infrastructur
 | [006](adr-006-known-issues-in-script.md) | KNOWN_ISSUES as in-script Python string (deferred RAG upgrade) | Accepted | 2026-05-10 | ai infra | 0 |
 | [007](adr-007-feedback-redirect.md) | `feedback@` auto-redirects to GitHub (does not bypass mutual exclusion) | Accepted | 2026-05-10 | architecture ux | 1 |
 | [008](adr-008-deepseek-v4-flash-triage.md) | DeepSeek v4-flash as first-line AI triage (supersedes ADR-003) | Accepted | 2026-05-13 | ai cost geo | 3 |
+| [009](adr-009-cloudflare-email-worker.md) | Multi-path inbound mail with byte-equal fixture-sourced auto-replies (TEE / DNSPod+Resend / CF Worker) | Accepted | 2026-05-14 | architecture email infra geo | 1 |
 
 ## Cross-cutting concerns
 
-- **GEO posture** — ADR-001 is the load-bearing rule; ADR-002, ADR-004, ADR-007 all derive consistency from it.
-- **Sustainability** — ADR-005 anchors the founder time budget; ADR-002 and ADR-007 enforce it via channel boundary.
-- **Cost envelope** — ADR-008 (formerly ADR-003) is the dominant cost lever; ADR-006 keeps prompt size bounded; both report into `governance/budget.md`. Migration to DeepSeek dropped per-issue cost by ~250×.
-- **China access** — ADR-004 is the only ADR that addresses Chinese users; the rest are language-independent.
+- **GEO posture** — ADR-001 is the load-bearing rule; ADR-002, ADR-004, ADR-007, ADR-009 all derive consistency from it (ADR-009's path selection is partly driven by mainland-CN reachability).
+- **Sustainability** — ADR-005 anchors the founder time budget; ADR-002 and ADR-007 enforce it via channel boundary; ADR-009's auto-reply byte-equality contract keeps SLA copy in sync across the 4 mailboxes.
+- **Cost envelope** — ADR-008 (formerly ADR-003) is the dominant AI-cost lever; ADR-006 keeps prompt size bounded; ADR-009 documents email-infra cost (free Path A2/B or ~$20/yr Path A); all three report into `governance/budget.md`. Migration to DeepSeek dropped per-issue cost by ~250×.
+- **China access** — ADR-004 (GitHub source-of-truth, Gitee mirror) and ADR-009 (multi-path inbound mail with mainland-CN-native Path A + fully-free Path A2) are the two CN-aware ADRs; the rest are language- and geography-independent.
 
 ## Related artifacts
 
