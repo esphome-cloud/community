@@ -577,7 +577,15 @@ def send_pager_email(
         print(f"[pager] SMTP send failed: {exc}", file=sys.stderr)
 
 
-def dispatch_to_github(issue_n: int, decision: dict[str, Any], repo: str) -> None:
+def dispatch_to_github(item_n: int, decision: dict[str, Any], repo: str, kind: str = "issue") -> None:
+    """Route to issue (PyGithub REST) or discussion (GraphQL) dispatch."""
+    if kind == "discussion":
+        _dispatch_to_discussion(item_n, decision, repo)
+    else:
+        _dispatch_to_issue(item_n, decision, repo)
+
+
+def _dispatch_to_issue(issue_n: int, decision: dict[str, Any], repo: str) -> None:
     """Apply labels, post comment with disclosure footer, close if appropriate."""
     from github import Github  # PyGithub — imported lazily.
 
@@ -605,25 +613,92 @@ def dispatch_to_github(issue_n: int, decision: dict[str, Any], repo: str) -> Non
             print(f"[dispatch] close failed: {exc}", file=sys.stderr)
 
 
+def _graphql_post(query: str, variables: dict[str, Any], token: str) -> dict[str, Any]:
+    """Lightweight GraphQL POST via stdlib urllib — no extra runtime deps."""
+    import urllib.request
+    payload = json.dumps({"query": query, "variables": variables}).encode("utf-8")
+    req = urllib.request.Request(
+        "https://api.github.com/graphql",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "User-Agent": "esphome-cloud-triage/1.0",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _dispatch_to_discussion(disc_n: int, decision: dict[str, Any], repo: str) -> None:
+    """Post comment + close on a discussion via GraphQL.
+
+    PyGithub lacks discussion mutations; we use the REST-equivalent
+    addDiscussionComment / closeDiscussion mutations directly.
+
+    Labels on discussions are intentionally skipped: discussion-label support
+    is repo-conditional, not load-bearing for Phase 1 G1 acceptance (only
+    comment + close are required by the e2e smoke).
+    """
+    token = os.environ["GITHUB_TOKEN"]
+    owner, name = repo.split("/", 1)
+
+    try:
+        data = _graphql_post(
+            "query($o:String!,$n:String!,$num:Int!){repository(owner:$o,name:$n){discussion(number:$num){id}}}",
+            {"o": owner, "n": name, "num": disc_n},
+            token,
+        )
+        disc_id = data["data"]["repository"]["discussion"]["id"]
+    except Exception as exc:
+        print(f"[dispatch] discussion id lookup failed: {exc}", file=sys.stderr)
+        return
+
+    if decision.get("response_to_user"):
+        body = decision["response_to_user"] + DISCLOSURE_FOOTER
+        try:
+            _graphql_post(
+                "mutation($d:ID!,$b:String!){addDiscussionComment(input:{discussionId:$d,body:$b}){comment{id}}}",
+                {"d": disc_id, "b": body},
+                token,
+            )
+        except Exception as exc:
+            print(f"[dispatch] addDiscussionComment failed: {exc}", file=sys.stderr)
+
+    if decision.get("should_close"):
+        reason = {"duplicate": "DUPLICATE", "spam": "OUTDATED"}.get(
+            decision.get("category", ""), "RESOLVED"
+        )
+        try:
+            _graphql_post(
+                "mutation($d:ID!,$r:DiscussionCloseReason!){closeDiscussion(input:{discussionId:$d,reason:$r}){discussion{closed}}}",
+                {"d": disc_id, "r": reason},
+                token,
+            )
+        except Exception as exc:
+            print(f"[dispatch] closeDiscussion failed: {exc}", file=sys.stderr)
+
+
 # ----------------------------------------------------------------------------
 # Input adapters
 # ----------------------------------------------------------------------------
 
-def _read_fixture(path: str) -> tuple[str, str, int]:
+def _read_fixture(path: str) -> tuple[str, str, int, str]:
     data = json.loads(Path(path).read_text())
-    return data["title"], data.get("body", ""), int(data.get("issue", 0))
+    return data["title"], data.get("body", ""), int(data.get("issue", 0)), "issue"
 
 
-def _read_gh_event() -> tuple[str, str, int]:
+def _read_gh_event() -> tuple[str, str, int, str]:
     event_path = os.environ["GITHUB_EVENT_PATH"]
     event = json.loads(Path(event_path).read_text())
     if "issue" in event:
-        obj = event["issue"]
+        obj, kind = event["issue"], "issue"
     elif "discussion" in event:
-        obj = event["discussion"]
+        obj, kind = event["discussion"], "discussion"
     else:
         raise SystemExit("GITHUB_EVENT_PATH has neither issue nor discussion payload")
-    return obj["title"], obj.get("body") or "", int(obj["number"])
+    return obj["title"], obj.get("body") or "", int(obj["number"]), kind
 
 
 # ----------------------------------------------------------------------------
@@ -645,9 +720,9 @@ def main() -> int:
 
     # 1. Read input.
     if args.input:
-        title, body, issue_n = _read_fixture(args.input)
+        title, body, issue_n, kind = _read_fixture(args.input)
     elif "GITHUB_EVENT_PATH" in os.environ:
-        title, body, issue_n = _read_gh_event()
+        title, body, issue_n, kind = _read_gh_event()
     else:
         print("error: provide --input <fixture> or set GITHUB_EVENT_PATH", file=sys.stderr)
         return 2
@@ -666,7 +741,7 @@ def main() -> int:
     # 4. Dispatch unless --dry-run / --mock-category.
     if args.dry_run or args.mock_category:
         return 0
-    dispatch_to_github(issue_n, decision, args.repo)
+    dispatch_to_github(issue_n, decision, args.repo, kind=kind)
     send_pager_email(issue_n, title, body, decision, args.repo)
     return 0
 
