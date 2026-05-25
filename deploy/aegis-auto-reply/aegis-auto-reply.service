@@ -1,0 +1,21 @@
+[Unit]
+Description=esphome-cloud auto-reply poll (ImprovMX inbound -> Resend outbound; ADR-009 Path A2 sub-option a)
+Documentation=https://github.com/esphome-cloud/community/blob/main/scripts/auto_reply_poll.py
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/opt/aegis-auto-reply/auto_reply.env
+WorkingDirectory=/opt/aegis-auto-reply
+ExecStart=/usr/bin/python3 /opt/aegis-auto-reply/scripts/auto_reply_poll.py
+StandardOutput=journal
+StandardError=journal
+User=root
+Group=root
+# Hardening
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+ReadWritePaths=/opt/aegis-auto-reply
