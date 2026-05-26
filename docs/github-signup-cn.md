@@ -136,13 +136,17 @@ AI 助手会在 90 秒内做第一道分诊。详见仓库 [README](../README.md
 - 邮件不会公开到 GitHub Issues —— 如果你的问题对其他用户也有价值,
   人工回复时会请你考虑授权我们把内容(脱敏后)同步到 Discussions。
 
-### 替代 2:网页反馈表(`esphome.cloud/feedback`)
+### 替代 2:网页反馈页(`esphome.cloud/feedback`)
 
-`https://esphome.cloud/feedback` 是无需账号的网页表单,提交后内容会进入
-`feedback@esphome.cloud` 邮箱并走同一套 AI 分诊流程。**注意**:本表单目前为
-Phase 2 之后的延迟项,仅当"无 GitHub"反馈累计超过 50 封/月时才会激活(详见
-[`docs/web-form-fallback-design.md`](web-form-fallback-design.md))。在表单上线
-之前,请使用替代 1。
+[`https://esphome.cloud/feedback`](https://esphome.cloud/feedback) 是一个无需
+账号的网页入口,内置邮件直达按钮以及 security@ / hello@ / Gitee 镜像各通道
+的简要说明。点击页面上的"发送邮件"按钮会自动打开本机的邮件客户端,内容
+会进入 `feedback@esphome.cloud` 邮箱并走同一套 AI 分诊流程。
+
+未来版本计划替换为完整的"无账号、不打开邮件客户端就能提交"的网页表单
+(详见 [`docs/web-form-fallback-design.md`](web-form-fallback-design.md))。
+在该完整表单上线之前,如果你的邮件客户端工作良好,直接走替代 1 的纯邮件
+路径同样有效。
 
 ### 关于实时聊天
 
