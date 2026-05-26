@@ -1,20 +1,22 @@
-Subject: Security issue received (24-hour acknowledgement SLA)
+Subject: 已收到安全报告(24 小时内致谢确认)
 
-Thank you for reporting a security or privacy concern.
+感谢报告这个安全或隐私问题。
 
-We acknowledge security reports within 24 hours, every day (not just office
-hours). Initial response will include either a triaged severity, a request
-for clarifying information, or a coordinated disclosure timeline.
+我们承诺在 **24 小时内** 对所有安全报告致谢确认 —— 每天有效,不局限于
+office hours。首次回复将给出以下三者之一:
 
-We follow coordinated disclosure. If you have not already, please include:
+  - 一个已分诊的严重程度评估
+  - 一个请你补充信息的问题清单
+  - 一份协调披露(coordinated disclosure)的时间线建议
 
-  - A short description of the issue
-  - Steps to reproduce (or a proof-of-concept if available)
-  - Your assessment of impact and affected components
-  - Your preferred contact channel for the disclosure thread
-  - Whether we should publicly credit you on resolution (with consent)
+我们遵循协调披露原则。如果还没附上,请补充:
 
-We will not disclose details publicly until a fix is shipped and you have
-been given the opportunity to coordinate disclosure timing.
+  - 问题的简短描述
+  - 复现步骤(或概念验证 PoC,如有)
+  - 你对影响范围 + 受影响组件的评估
+  - 你希望使用的披露线程沟通渠道
+  - 修复发布时是否公开致谢你(可选)
 
-— The esphome.cloud / community security desk
+在修复发布之前,我们不会公开披露任何细节,并会给你协调披露时机的机会。
+
+—— esphome.cloud / community 安全响应组

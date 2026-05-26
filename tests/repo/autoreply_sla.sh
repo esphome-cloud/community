@@ -25,10 +25,10 @@ for f in "${FIXTURES[@]}"; do
     continue
   fi
 
-  if grep -qE 'office hours|24 hours' "$path"; then
-    sla=$(grep -oE 'office hours|24 hours' "$path" | sort -u | tr '\n' '|' | sed 's/|$//')
+  if grep -qE 'office hours|24 hours|24 小时' "$path"; then
+    sla=$(grep -oE 'office hours|24 hours|24 小时' "$path" | sort -u | tr '\n' '|' | sed 's/|$//')
   else
-    echo "  [$f] FAIL — missing both 'office hours' AND '24 hours' anchors"
+    echo "  [$f] FAIL — missing all SLA anchors ('office hours' / '24 hours' / '24 小时')"
     fails=$((fails + 1)); continue
   fi
 

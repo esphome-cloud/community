@@ -1,7 +1,11 @@
 /**
  * Cloudflare Email Worker — esphome-cloud/community auto-replies.
  *
- * Phase 1 Task 1.3 / IC-2..IC-5. Deployed to a CF Worker bound to all 4 aliases:
+ * Phase 1 Task 1.3 / IC-2..IC-5. ADR-009 Path B reference implementation.
+ * NOT currently deployed — the live path is Path A2 (ImprovMX → 163 →
+ * scripts/auto_reply_poll.py on 3qMq → Resend) as of 2026-05-25. This file
+ * exists so that an operator can fall back to a CF Worker binding all 4
+ * aliases if Path A2 degrades:
  *   feedback@esphome.cloud  security@esphome.cloud
  *   hello@esphome.cloud     support@esphome.cloud
  *
@@ -24,97 +28,92 @@
 
 const AUTO_REPLY_BODIES = {
   'feedback': {
-    subject: 'We received your feedback (and please use GitHub)',
-    body: `Thank you for writing to esphome.cloud / community.
+    subject: '我们收到了你的反馈(下次请直接用 GitHub)',
+    body: `感谢来信 esphome.cloud / community。
 
-This mailbox is monitored, but for almost everything you might want to file,
-GitHub is faster, more visible to other users, and gets you an AI-assisted
-first reply within ~90 seconds:
+这个邮箱有人值守,但绝大多数你想反馈的内容,GitHub 都更快、更公开、更多其他
+用户能看到 —— 而且 AI 助手会在 ~90 秒内给出第一条回复:
 
-  Bug reports + feature requests:
+  Bug 报告 + 功能请求:
     https://github.com/esphome-cloud/community/issues
 
-  Questions + ideas + showcase:
+  提问 + 想法 + 作品展示:
     https://github.com/esphome-cloud/community/discussions
 
-Human follow-up on those channels happens Tuesday during office hours
-(14:00-16:00 UTC+8). One window per week, no realtime chat.
+人工跟进集中在**每周二 14:00-16:00 UTC+8 的 office hours**(一周一次,
+没有实时聊天)。
 
-If your message is security-related, please re-send to security@esphome.cloud
-(24-hour acknowledgement SLA — every day, not just Tuesday).
+如果是**安全相关问题**,请改投 security@esphome.cloud
+(24 小时内致谢确认,每天有效,不仅限周二)。
 
-If your message is private, commercial, or partnership-related, that should
-go to hello@esphome.cloud.
+如果是**私下沟通**(商业、合作、媒体咨询),请改投 hello@esphome.cloud。
 
-— The esphome.cloud / community auto-responder
+—— esphome.cloud / community 自动回复
 `,
   },
   'security': {
-    subject: 'Security issue received (24-hour acknowledgement SLA)',
-    body: `Thank you for reporting a security or privacy concern.
+    subject: '已收到安全报告(24 小时内致谢确认)',
+    body: `感谢报告这个安全或隐私问题。
 
-We acknowledge security reports within 24 hours, every day (not just office
-hours). Initial response will include either a triaged severity, a request
-for clarifying information, or a coordinated disclosure timeline.
+我们承诺在 **24 小时内** 对所有安全报告致谢确认 —— 每天有效,不局限于
+office hours。首次回复将给出以下三者之一:
 
-We follow coordinated disclosure. If you have not already, please include:
+  - 一个已分诊的严重程度评估
+  - 一个请你补充信息的问题清单
+  - 一份协调披露(coordinated disclosure)的时间线建议
 
-  - A short description of the issue
-  - Steps to reproduce (or a proof-of-concept if available)
-  - Your assessment of impact and affected components
-  - Your preferred contact channel for the disclosure thread
-  - Whether we should publicly credit you on resolution (with consent)
+我们遵循协调披露原则。如果还没附上,请补充:
 
-We will not disclose details publicly until a fix is shipped and you have
-been given the opportunity to coordinate disclosure timing.
+  - 问题的简短描述
+  - 复现步骤(或概念验证 PoC,如有)
+  - 你对影响范围 + 受影响组件的评估
+  - 你希望使用的披露线程沟通渠道
+  - 修复发布时是否公开致谢你(可选)
 
-— The esphome.cloud / community security desk
+在修复发布之前,我们不会公开披露任何细节,并会给你协调披露时机的机会。
+
+—— esphome.cloud / community 安全响应组
 `,
   },
   'hello': {
-    subject: 'Hello — and a quick note on response times',
-    body: `Thanks for writing to hello@esphome.cloud.
+    subject: '你好 —— 关于回复时间的说明',
+    body: `感谢来信 hello@esphome.cloud。
 
-This mailbox is for things that should not be public: Self-hosted contract
-inquiries, partnership conversations, press requests, and other private
-matters.
+这个邮箱专门处理**不适合公开**的话题:Self-hosted 合作咨询、商业合作、
+媒体采访,以及其他私下沟通。
 
-A few quick redirects so the right things end up in the right places:
+几条快速重定向,确保不同话题进到正确的入口:
 
-  Bug reports + feature requests:
+  Bug 报告 + 功能请求:
     https://github.com/esphome-cloud/community/issues
 
-  Questions + ideas + showcase:
+  提问 + 想法 + 作品展示:
     https://github.com/esphome-cloud/community/discussions
 
-  Security or privacy reports:
-    security@esphome.cloud (24-hour acknowledgement SLA)
+  安全 / 隐私报告:
+    security@esphome.cloud(24 小时内致谢确认)
 
-For anything that belongs here, a human replies on the Tuesday office hours
-window (14:00-16:00 UTC+8). One window per week — no realtime expectations.
+属于 hello@ 的内容,人工回复会安排在**每周二 14:00-16:00 UTC+8 的 office
+hours**,一周一次 —— 没有实时回复预期。
 
-— The esphome.cloud / community founder mailbox auto-responder
+—— esphome.cloud / community 创始人邮箱自动回复
 `,
   },
   'support': {
-    subject: 'Support request received',
-    body: `Thank you for reaching out to esphome.cloud / community support.
+    subject: '已收到 support 工单',
+    body: `感谢联系 esphome.cloud / community support。
 
-This mailbox serves paid support contracts only. Coverage is business
-office hours Mon-Fri 09:00-18:00 UTC+8 (not 24-hour); outside that window
-requests queue until the next business day. Per-tier response windows:
+此邮箱**仅服务 Self-hosted 合同伙伴**。响应窗口为**工作日 周一至周五
+09:00-18:00 UTC+8 的 office hours**(并非 24 小时);窗口外的请求排队
+到下一个工作日。
 
-  Pro tier:          response within 4 hours, Mon-Fri 09:00-18:00 UTC+8
-  Pro+ tier:         response within 2 hours, Mon-Fri 09:00-18:00 UTC+8
-  Business tier:     response within 1 hour,  Mon-Fri 09:00-18:00 UTC+8
-  Self-hosted tier:  response per contract,   Mon-Fri 09:00-18:00 UTC+8
+  Self-hosted: 按合同响应
 
-BETA NOTICE: paid support is not generally available during BETA.
-This mailbox is provided to existing Self-hosted contract partners only.
-If you reached this address by mistake and your inquiry is general, please
-re-send to hello@esphome.cloud instead.
+**BETA 期注意事项**:BETA 期间付费 support 不对外开放。此邮箱仅提供给
+现有 Self-hosted 合作伙伴。如果你是误发到此地址、内容属于一般咨询,
+请改投 hello@esphome.cloud。
 
-— The esphome.cloud / community support desk
+—— esphome.cloud / community support 响应组
 `,
   },
 };

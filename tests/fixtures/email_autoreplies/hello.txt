@@ -1,23 +1,22 @@
-Subject: Hello — and a quick note on response times
+Subject: 你好 —— 关于回复时间的说明
 
-Thanks for writing to hello@esphome.cloud.
+感谢来信 hello@esphome.cloud。
 
-This mailbox is for things that should not be public: Self-hosted contract
-inquiries, partnership conversations, press requests, and other private
-matters.
+这个邮箱专门处理**不适合公开**的话题:Self-hosted 合作咨询、商业合作、
+媒体采访,以及其他私下沟通。
 
-A few quick redirects so the right things end up in the right places:
+几条快速重定向,确保不同话题进到正确的入口:
 
-  Bug reports + feature requests:
+  Bug 报告 + 功能请求:
     https://github.com/esphome-cloud/community/issues
 
-  Questions + ideas + showcase:
+  提问 + 想法 + 作品展示:
     https://github.com/esphome-cloud/community/discussions
 
-  Security or privacy reports:
-    security@esphome.cloud (24-hour acknowledgement SLA)
+  安全 / 隐私报告:
+    security@esphome.cloud(24 小时内致谢确认)
 
-For anything that belongs here, a human replies on the Tuesday office hours
-window (14:00-16:00 UTC+8). One window per week — no realtime expectations.
+属于 hello@ 的内容,人工回复会安排在**每周二 14:00-16:00 UTC+8 的 office
+hours**,一周一次 —— 没有实时回复预期。
 
-— The esphome.cloud / community founder mailbox auto-responder
+—— esphome.cloud / community 创始人邮箱自动回复

@@ -1,19 +1,15 @@
-Subject: Support request received
+Subject: 已收到 support 工单
 
-Thank you for reaching out to esphome.cloud / community support.
+感谢联系 esphome.cloud / community support。
 
-This mailbox serves paid support contracts only. Coverage is business
-office hours Mon-Fri 09:00-18:00 UTC+8 (not 24-hour); outside that window
-requests queue until the next business day. Per-tier response windows:
+此邮箱**仅服务 Self-hosted 合同伙伴**。响应窗口为**工作日 周一至周五
+09:00-18:00 UTC+8 的 office hours**(并非 24 小时);窗口外的请求排队
+到下一个工作日。
 
-  Pro tier:          response within 4 hours, Mon-Fri 09:00-18:00 UTC+8
-  Pro+ tier:         response within 2 hours, Mon-Fri 09:00-18:00 UTC+8
-  Business tier:     response within 1 hour,  Mon-Fri 09:00-18:00 UTC+8
-  Self-hosted tier:  response per contract,   Mon-Fri 09:00-18:00 UTC+8
+  Self-hosted: 按合同响应
 
-BETA NOTICE: paid support is not generally available during BETA.
-This mailbox is provided to existing Self-hosted contract partners only.
-If you reached this address by mistake and your inquiry is general, please
-re-send to hello@esphome.cloud instead.
+**BETA 期注意事项**:BETA 期间付费 support 不对外开放。此邮箱仅提供给
+现有 Self-hosted 合作伙伴。如果你是误发到此地址、内容属于一般咨询,
+请改投 hello@esphome.cloud。
 
-— The esphome.cloud / community support desk
+—— esphome.cloud / community support 响应组
