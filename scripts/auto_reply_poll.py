@@ -112,7 +112,9 @@ def should_skip(msg: email.message.Message) -> tuple[bool, str]:
         return True, f"Precedence={prec}"
 
     local = sender.split("@", 1)[0] if "@" in sender else sender
-    if any(token in local for token in ("noreply", "no-reply", "donotreply", "do-not-reply")):
+    if any(token in local for token in ("noreply", "no-reply", "donotreply", "do-not-reply",
+                                         "postmaster", "mailer-daemon", "mail-daemon",
+                                         "mailerdaemon", "bounce", "bounces")):
         return True, f"no-reply sender ({sender})"
 
     return False, ""
