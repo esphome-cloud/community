@@ -1,5 +1,21 @@
 # esphome-cloud-email-router
 
+> **Reference implementation only — NOT currently the deployed path.**
+>
+> The 4 `esphome.cloud` aliases are served by **Path A2** as of 2026-05-25:
+>
+>   ImprovMX inbound (5 alias rules) → `ff4415@163.com` →
+>   `scripts/auto_reply_poll.py` on 3qMq (systemd timer
+>   `aegis-auto-reply.timer`, every 5 min, CN-region) →
+>   Resend outbound (`ai-triage@esphome.cloud`).
+>
+> 163 geo-blocks GitHub Actions runners, so CN-region execution is mandatory
+> for the polling host. This Cloudflare Worker (Path B) remains checked in as
+> a documented fallback per ADR-009. See
+> [`governance/adr-009-cloudflare-email-worker.md`](../governance/adr-009-cloudflare-email-worker.md)
+> for the path tradeoffs and `../docs/email-mailbox-setup.md` Path A2 section
+> (owed — being written).
+
 Cloudflare Email Worker that handles incoming mail for the 4 esphome.cloud
 aliases: forwards to the founder inbox + fires an auto-reply per IC-2..IC-5.
 
