@@ -116,7 +116,7 @@ Documentation: CC BY 4.0. Scripts (`scripts/`): MIT. Final `LICENSE` file lands 
 ### Gitee 镜像
 
 `gitee.com/esphome-cloud/community` 是只读镜像 —— 源码、文档可不翻墙访问。
-提 Issue / 发 Discussion 仍在 GitHub。Phase 2 任务 2.3 提供完整指引。
+提 Issue / 发 Discussion 仍在 GitHub。详见 [《GitHub 注册与访问指南》](docs/github-signup-cn.md)。
 
 ### 行为准则
 
