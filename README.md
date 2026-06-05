@@ -90,7 +90,7 @@ you removed.
 
 ## License
 
-Documentation: CC BY 4.0. Scripts (`scripts/`): MIT. Final `LICENSE` file lands in Phase 1.
+Documentation: CC BY 4.0. Scripts (`scripts/`): MIT. See [LICENSE](LICENSE).
 
 ---
 
