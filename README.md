@@ -1,6 +1,6 @@
 # esphome.cloud / community
 
-**[English](#what-do-you-want-to-do)** | **[中文](#中文版)**
+**[English](#what-do-you-want-to-do)** | **[中文](README.zh-CN.md)**
 
 > The feedback, ideas, and bug reports lane for the [esphome.cloud](https://esphome.cloud) BETA.
 
@@ -94,31 +94,4 @@ Documentation: CC BY 4.0. Scripts (`scripts/`): MIT. See [LICENSE](LICENSE).
 
 ---
 
-## 中文版
-
-> [esphome.cloud](https://esphome.cloud) BETA 的反馈、想法、Bug 报告专区。
-
-由**我**独自维护,AI 助手(DeepSeek v4-flash)处理第一道分诊。
-人工跟进集中在**周二 office hours 14:00-16:00 UTC+8**,安全报告 24 hours SLA。
-
-### 你想做什么?
-
-| 你想... | 请去 |
-|---|---|
-| 问"怎么做"的问题 | [Discussions / Q&A](https://github.com/esphome-cloud/community/discussions/categories/q-a) |
-| 分享一个想法 | [Discussions / Ideas](https://github.com/esphome-cloud/community/discussions/categories/ideas) |
-| 展示你做的项目 | [Discussions / Show & Tell](https://github.com/esphome-cloud/community/discussions/categories/show-and-tell) |
-| 报告 Bug | [Issues / Bug Report](https://github.com/esphome-cloud/community/issues/new?template=bug.yml) |
-| 提交功能请求 | [Issues / Feature Request](https://github.com/esphome-cloud/community/issues/new?template=feature.yml) |
-| 安全问题 | [security@esphome.cloud](mailto:security@esphome.cloud) (24 hours SLA) |
-| 私下沟通(商业、合作、媒体) | [hello@esphome.cloud](mailto:hello@esphome.cloud) |
-
-### Gitee 镜像
-
-`gitee.com/esphome-cloud/community` 是只读镜像 —— 源码、文档可不翻墙访问。
-提 Issue / 发 Discussion 仍在 GitHub。详见 [《GitHub 注册与访问指南》](docs/github-signup-cn.md)。
-
-### 行为准则
-
-见 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
-简短版:有耐心、有价值、不在 office hours 外 at 维护者、中英文都欢迎、骚扰零容忍。
+> 📖 中文用户请见 [README.zh-CN.md](README.zh-CN.md)。
