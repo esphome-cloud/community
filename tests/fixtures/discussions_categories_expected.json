@@ -1,7 +1,9 @@
 {
-  "version": 1,
+  "version": 2,
   "source_of_truth": "tests/fixtures/discussions_categories_expected.json",
   "generated_at": "2026-05-13",
+  "revised": "2026-05-26",
+  "revision_note": "v2: Announcements semantic reframed after 2026-05-26 discovery that GitHub no longer supports category-level 'Allow comments' toggle (deprecated mid-2024 — all category formats now allow comments). Replacement guarantee: `format=Announcement` (only maintainers can post new discussions) PLUS every discussion in Announcements MUST be locked-after-publish (blocks non-maintainer commenting per-post). Fixture + discussions_cats.sh + IC-9 + phase-1 Task 1.2 acceptance #3 all updated in lockstep.",
   "purpose": "Canonical specification of the 5 Discussions categories per IC-9. tests/repo/discussions_cats.sh asserts the live repo matches. Categories must be created via the GitHub web UI (no public createDiscussionCategory mutation as of 2026-05); use docs/discussions-setup-walkthrough.md as the paste-driven runbook.",
   "expected_count": 5,
   "forbidden_names": ["General", "Off-Topic", "Chat", "Random"],
@@ -11,10 +13,12 @@
       "emoji": ":mega:",
       "slug_hint": "announcements",
       "format": "ANNOUNCEMENT",
-      "description": "One-way broadcasts from the maintainer. Comments are disabled; replies live in other categories.",
+      "description": "One-way broadcasts from the maintainer. Format=Announcement restricts who can post new discussions (maintainers + admins only); each Announcement post is locked after publish to block non-maintainer commenting.",
       "is_answerable": false,
-      "comments_enabled": false,
-      "ui_notes": "Create with TYPE = 'Announcement'. After creation, edit the category and uncheck 'Allow comments'."
+      "comments_enabled": true,
+      "comments_enabled_note": "true at the CATEGORY level — GitHub deprecated the per-category 'Allow comments' toggle mid-2024; all formats now allow comments at the category level. Load-bearing replacement is `discussions_lock_after_publish` below.",
+      "discussions_lock_after_publish": true,
+      "ui_notes": "Create with TYPE = 'Announcement' (do this at category creation; format can be changed later via Edit category but requires no existing discussions in a non-Announcement type first). After each Announcement post is published, lock it: `gh api graphql -f query='mutation { lockLockable(input: {lockableId: \"D_kwDO...\"}) { lockedRecord { ... on Discussion { locked } } } }'`. discussions_cats.sh asserts all Announcement discussions are locked."
     },
     {
       "name": "Q&A",

@@ -3,7 +3,11 @@
 #   - exactly 5 categories matching the names in
 #     tests/fixtures/discussions_categories_expected.json
 #   - no "General" / "Off-Topic" / "Chat" / "Random" category (V-ADR-001 spirit)
-#   - 📢 Announcements has comments disabled
+#   - 📢 Announcements: every discussion in this category is locked-after-publish
+#     (replacement for the deprecated category-level "Allow comments" toggle;
+#     GitHub no longer supports category-level comment-disable since mid-2024 —
+#     the per-discussion lock pattern blocks non-maintainer commenting per-post;
+#     see IC-9 + tests/fixtures/discussions_categories_expected.json v2)
 #   - 1 pinned welcome post in Announcements
 #
 # Queries the live repo via gh GraphQL.
@@ -40,6 +44,14 @@ query($owner: String!, $name: String!) {
         emoji
         isAnswerable
         description
+      }
+    }
+    discussions(first: 100) {
+      nodes {
+        number
+        title
+        locked
+        category { name }
       }
     }
     pinnedDiscussions(first: 5) {
@@ -139,6 +151,32 @@ print("PASS: at least 1 pinned post in Announcements")
 PY
 pin_result=$?
 [ $pin_result -ne 0 ] && fails=$((fails + 1))
+
+echo
+echo '=== announcement-discussions locked-after-publish ==='
+python3 <<PY
+import json, sys
+resp = json.loads('''$resp''')
+discussions = resp["data"]["repository"]["discussions"]["nodes"]
+ann_discs = [d for d in discussions if d["category"]["name"] == "Announcements"]
+print(f"announcement discussions: {len(ann_discs)}")
+if not ann_discs:
+    # No Announcement discussions yet — the lock-after-publish invariant is
+    # trivially satisfied (nothing to lock). PASS, but note for visibility.
+    print("PASS: no Announcement discussions yet (lock invariant vacuous)")
+    sys.exit(0)
+unlocked = [d for d in ann_discs if not d["locked"]]
+for d in ann_discs:
+    state = "locked" if d["locked"] else "UNLOCKED"
+    print(f"  #{d['number']} [{state}] {d['title']!r}")
+if unlocked:
+    print(f"FAIL: {len(unlocked)} Announcement discussion(s) NOT locked — lock-after-publish invariant violated.")
+    print("  For each, run: gh api graphql -f query='mutation { lockLockable(input: {lockableId: \"<discussion-id>\"}) { lockedRecord { ... on Discussion { locked } } } }'")
+    sys.exit(1)
+print(f"PASS: {len(ann_discs)}/{len(ann_discs)} Announcement discussions locked.")
+PY
+lock_result=$?
+[ $lock_result -ne 0 ] && fails=$((fails + 1))
 
 echo
 if [ "$fails" -gt 0 ]; then
