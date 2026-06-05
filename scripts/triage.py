@@ -696,6 +696,12 @@ def _read_gh_event() -> tuple[str, str, int, str]:
         obj, kind = event["issue"], "issue"
     elif "discussion" in event:
         obj, kind = event["discussion"], "discussion"
+        # Announcements are founder-only posts — never triage them.
+        # The AI classifies personal/emotional content as spam (Phase 3
+        # incident: Discussion #73, 2026-06-06). Skip before classify().
+        cat_slug = (obj.get("category") or {}).get("slug", "")
+        if cat_slug == "announcements":
+            raise SystemExit(0)
     else:
         raise SystemExit("GITHUB_EVENT_PATH has neither issue nor discussion payload")
     return obj["title"], obj.get("body") or "", int(obj["number"]), kind
