@@ -5,7 +5,7 @@
 > The feedback, ideas, and bug reports lane for the [esphome.cloud](https://esphome.cloud) BETA.
 
 This repository is the single feedback intake for esphome.cloud BETA users. It is operated
-by **one founder**, with an AI assistant handling first-line triage so the founder can spend
+by **me**, with an AI assistant handling first-line triage so I can spend
 their hours on the things AI cannot do.
 
 If you're not sure which lane you belong in, the **decision graph** below answers in one
@@ -98,7 +98,7 @@ Documentation: CC BY 4.0. Scripts (`scripts/`): MIT. Final `LICENSE` file lands 
 
 > [esphome.cloud](https://esphome.cloud) BETA 的反馈、想法、Bug 报告专区。
 
-由**一位创始人**独自维护,AI 助手(DeepSeek v4-flash)处理第一道分诊。
+由**我**独自维护,AI 助手(DeepSeek v4-flash)处理第一道分诊。
 人工跟进集中在**周二 office hours 14:00-16:00 UTC+8**,安全报告 24 hours SLA。
 
 ### 你想做什么?
