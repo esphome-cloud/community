@@ -175,4 +175,4 @@ Discussions / Issues 或上述邮箱中。
 1. 在 Discussions / Ideas 分类下发帖(英文或中文均可)。
 2. 直接发邮件到 `feedback@esphome.cloud`,标题写 `[CN guide]` 前缀。
 
-文档更新日期:2026-05-13(Phase 2 Task 2.3)。
+文档更新日期:2026-05-13。
