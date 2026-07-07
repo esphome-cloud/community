@@ -47,6 +47,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           gh api graphql --paginate -f query='
             query($cursor: String) {
               repository(owner: "esphome-cloud", name: "community") {
@@ -72,8 +73,8 @@ jobs:
                 }
               }
             }' > /tmp/discussions.json
-          echo "Fetched $(python3 -c 'import json; d=json.load(open("/tmp/discussions.json")); pages=len(d) if isinstance(d,list) else 1; print(f"{pages} page(s)")')"
-
+          count=$(python3 -c 'import json; d=json.load(open("/tmp/discussions.json")); pages=len(d) if isinstance(d,list) else 1; nodes=d[0]["data"]["repository"]["discussions"]["nodes"] if isinstance(d,list) else d["data"]["repository"]["discussions"]["nodes"]; print(len(nodes))')
+          echo "Fetched ${count} discussion(s)"
       - name: Generate Wiki markdown pages
         run: |
           python3 << 'PYEOF'
@@ -183,17 +184,25 @@ jobs:
           WIKI_REMOTE="git@gitee.com:esphome-cloud/community.wiki.git"
           WORK_DIR="/tmp/wiki-repo"
 
+          # Verify generated pages exist before proceeding
+          if [ ! -d /tmp/wiki-pages ] || [ -z "$(ls -A /tmp/wiki-pages 2>/dev/null)" ]; then
+            echo "ERROR: /tmp/wiki-pages is empty or missing. Check previous step."
+            exit 1
+          fi
+          echo "Generated pages: $(find /tmp/wiki-pages -name '*.md' | wc -l) markdown files"
+
+          rm -rf "$WORK_DIR"
           if git clone "$WIKI_REMOTE" "$WORK_DIR" 2>/dev/null; then
-            echo "Cloned existing wiki."
+            echo "Cloned existing wiki from Gitee."
           else
             echo "Wiki repo not found — initializing new wiki."
             mkdir -p "$WORK_DIR"
-            cd "$WORK_DIR"
-            git init
-            git remote add origin "$WIKI_REMOTE"
+            git -C "$WORK_DIR" init
+            git -C "$WORK_DIR" remote add origin "$WIKI_REMOTE"
           fi
 
           cd "$WORK_DIR"
+          echo "Working in: $(pwd)"
 
           # Remove all previous discussion pages (clean sync handles deletions)
           find . -name "*.md" ! -name "_Sidebar.md" -delete 2>/dev/null || true
