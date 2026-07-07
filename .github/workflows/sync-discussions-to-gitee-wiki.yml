@@ -22,6 +22,7 @@ on:
 
 permissions:
   contents: read
+  discussions: read
 
 concurrency:
   group: sync-discussions-to-gitee-wiki
