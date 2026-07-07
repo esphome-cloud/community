@@ -52,6 +52,10 @@ BETA→GA 路线图及各阶段的准入标准见 [`governance/release-gate.md`]
 
 只读镜像位于 [`gitee.com/esphome-cloud/community`](https://gitee.com/esphome-cloud/community)，每 6 小时同步一次。依据 [ADR-004](governance/adr-004-github-source-of-truth.md)，GitHub 是唯一权威来源，Gitee 单向承载源码 + 文档 + 已回复的问答。提交仍在 GitHub 侧进行。
 
+**Discussions 镜像**：Gitee 不支持原生 Discussions，静态副本位于 Gitee 镜像的
+[`docs/discussions/`](https://gitee.com/esphome-cloud/community/tree/main/docs/discussions)
+目录 —— 按分类整理的只读 Markdown 页面，可在线浏览。
+
 GitHub 注册与加速指南：[`docs/github-signup-cn.md`](docs/github-signup-cn.md)。不用 GitHub 的兜底方案：发邮件到 `feedback@esphome.cloud`。
 
 ---

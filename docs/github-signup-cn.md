@@ -162,6 +162,10 @@ Discussions / Issues 或上述邮箱中。
 
 - **不翻墙读源码 / 文档**:本指南本身就是从这里被你读到的。
 - **不翻墙读已回答的问题**:Discussions / Issues 内容会随 6 小时一次的同步流到 Gitee。
+- **Discussions 静态镜像**:Gitee 不支持原生 Discussions，但 Discussions
+  内容会自动转换为只读 Markdown 页面，存放在 Gitee 镜像的
+  [`docs/discussions/`](https://gitee.com/esphome-cloud/community/tree/main/docs/discussions)
+  目录中，按分类（Q&A / Ideas / Show & Tell / Announcements）整理。
 
 镜像是 **只读** 的 —— Gitee 上不能新建 Issue 或 Discussion(创建后我们也不会同步回 GitHub),
 请通过上述方法之一在 GitHub 侧操作。

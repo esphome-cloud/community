@@ -69,6 +69,10 @@ Read-only mirror at [`gitee.com/esphome-cloud/community`](https://gitee.com/esph
 synced every 6 hours. Per [ADR-004](governance/adr-004-github-source-of-truth.md), GitHub is
 the source of truth; Gitee carries source + docs + answered Q&A one-way. Filing happens on GitHub.
 
+**Discussions mirror**: Since Gitee has no native Discussions, a static copy lives at
+[`docs/discussions/`](https://gitee.com/esphome-cloud/community/tree/main/docs/discussions)
+on the Gitee mirror — browsable as markdown pages organized by category.
+
 Chinese GitHub-signup + acceleration guide: [`docs/github-signup-cn.md`](docs/github-signup-cn.md).
 No-GitHub fallback: email `feedback@esphome.cloud`.
 
