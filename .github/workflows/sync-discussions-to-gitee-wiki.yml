@@ -199,19 +199,26 @@ jobs:
             mkdir -p "$WORK_DIR"
             git -C "$WORK_DIR" init
             git -C "$WORK_DIR" remote add origin "$WIKI_REMOTE"
-          fi
-
           cd "$WORK_DIR"
           echo "Working in: $(pwd)"
+          echo "Git dir exists: $(test -d .git && echo YES || echo NO)"
+          ls -la .git/ | head -3
 
           # Remove all previous discussion pages (clean sync handles deletions)
-          find . -name "*.md" ! -name "_Sidebar.md" -delete 2>/dev/null || true
-          find . -type d -empty -delete 2>/dev/null || true
+          echo "Removing old pages..."
+          find . -maxdepth 1 -name "*.md" ! -name "_Sidebar.md" -delete 2>/dev/null || true
+          # Only delete empty subdirs (safe: .git is never empty)
+          find . -mindepth 1 -maxdepth 1 -type d -empty -delete 2>/dev/null || true
+          echo "After cleanup: $(ls)"
 
           # Copy generated pages
-          cp -r /tmp/wiki-pages/* .
+          echo "Copying generated pages..."
+          cp -r /tmp/wiki-pages/* . || { echo "cp FAILED with $?"; ls /tmp/wiki-pages/; exit 1; }
+          echo "After copy: $(ls)"
+          echo "Running git add..."
+          git add -A 2>&1
+          echo "git add exit: $?"
 
-          git add -A
           if git diff --cached --quiet; then
             echo "No changes to wiki."
           else
@@ -222,7 +229,3 @@ jobs:
             git push origin master 2>/dev/null || git push --set-upstream origin master
             echo "Wiki synced successfully."
           fi
-
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f ~/.ssh/gitee_mirror
