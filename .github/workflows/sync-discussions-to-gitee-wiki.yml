@@ -1,0 +1,219 @@
+name: Sync Discussions to Gitee Wiki
+
+# Phase 2 enhancement — mirrors GitHub Discussions into Gitee Wiki pages.
+# Gitee has no native Discussions feature; the Wiki is Git-backed and
+# browsable at https://gitee.com/esphome-cloud/community/wiki
+#
+# Why a separate workflow (not merged into mirror-to-gitee.yml):
+#   - Discussions are API objects, not git objects — push triggers are
+#     irrelevant; schedule + manual dispatch only.
+#   - Separate concurrency group avoids the code mirror blocking wiki sync.
+#
+# Limitations (by design, per ADR-004):
+#   - Read-only one-way: GitHub → Gitee Wiki. Wiki edits on Gitee are
+#     overwritten on next sync.
+#   - Drift: ≤6h + workflow runtime (~2min). Discussions are not
+#     latency-sensitive.
+
+on:
+  schedule:
+    - cron: '30 */6 * * *'   # offset 30min from code mirror to spread load
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-discussions-to-gitee-wiki
+  cancel-in-progress: false
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH for Gitee Wiki
+        env:
+          GITEE_PRIVATE_KEY: ${{ secrets.GITEE_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          install -m 600 /dev/stdin ~/.ssh/gitee_mirror <<<"$GITEE_PRIVATE_KEY"
+          ssh-keyscan -t ed25519,rsa gitee.com >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/gitee_mirror ~/.ssh/known_hosts
+
+      - name: Fetch GitHub Discussions via GraphQL
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api graphql --paginate -f query='
+            query($cursor: String) {
+              repository(owner: "esphome-cloud", name: "community") {
+                discussions(first: 100, after: $cursor,
+                            orderBy: {field: CREATED_AT, direction: DESC}) {
+                  pageInfo { hasNextPage endCursor }
+                  nodes {
+                    number
+                    title
+                    url
+                    category { name slug }
+                    createdAt
+                    body
+                    answer { body }
+                    comments(first: 100) {
+                      nodes {
+                        author { login }
+                        body
+                        createdAt
+                      }
+                    }
+                  }
+                }
+              }
+            }' > /tmp/discussions.json
+          echo "Fetched $(python3 -c 'import json; d=json.load(open("/tmp/discussions.json")); pages=len(d) if isinstance(d,list) else 1; print(f"{pages} page(s)")')"
+
+      - name: Generate Wiki markdown pages
+        run: |
+          python3 << 'PYEOF'
+          import json, os, re
+          from pathlib import Path
+
+          with open("/tmp/discussions.json") as f:
+              raw = json.load(f)
+
+          # --paginate produces a JSON array when multiple pages exist
+          discussions = []
+          pages = raw if isinstance(raw, list) else [raw]
+          for page in pages:
+              nodes = (page.get("data", {})
+                           .get("repository", {})
+                           .get("discussions", {})
+                           .get("nodes", []))
+              discussions.extend(nodes)
+
+          if not discussions:
+              print("No discussions found — nothing to sync.")
+              exit(0)
+
+          out = Path("/tmp/wiki-pages")
+          # Clean slate each sync to handle deletions
+          if out.exists():
+              import shutil
+              shutil.rmtree(out)
+          out.mkdir()
+
+          def slugify(title, number):
+              """Filename-safe slug: discussion number + ASCII approximation of title."""
+              safe = title[:60]
+              # Keep alphanumeric + spaces + hyphens only
+              safe = re.sub(r'[^\w\s-]', '', safe, flags=re.ASCII)
+              safe = re.sub(r'[-\s]+', '-', safe).strip('-').lower()
+              return f"{number}-{safe}.md" if safe else f"{number}.md"
+
+          cats = {}  # slug -> {name, items}
+
+          for d in discussions:
+              cat_slug = d["category"]["slug"]
+              cat_name = d["category"]["name"]
+              if cat_slug not in cats:
+                  cats[cat_slug] = {"name": cat_name, "items": []}
+              cats[cat_slug]["items"].append(d)
+
+              cat_dir = out / cat_slug
+              cat_dir.mkdir(exist_ok=True)
+
+              filename = slugify(d["title"], d["number"])
+              filepath = cat_dir / filename
+
+              with open(filepath, "w", encoding="utf-8") as f:
+                  f.write(f'# {d["title"]}\n\n')
+                  f.write(f'> **分类**: {d["category"]["name"]}')
+                  f.write(f' | **创建**: {d["createdAt"]}')
+                  f.write(f' | **讨论 #{d["number"]}**\n')
+                  f.write(f'> 此页面由 sync-discussions-to-gitee-wiki 自动同步，**只读**。\n')
+                  f.write(f'> 原帖: [{d["url"]}]({d["url"]})\n\n')
+                  f.write('---\n\n')
+
+                  if d.get("body"):
+                      f.write(d["body"].strip() + "\n\n")
+
+                  # Accepted answer (if any)
+                  answer = d.get("answer")
+                  if answer and answer.get("body"):
+                      f.write('---\n\n## ✅ 已采纳的回答\n\n')
+                      f.write(answer["body"].strip() + "\n\n")
+
+                  # Comments
+                  comments = d.get("comments", {}).get("nodes", [])
+                  if comments:
+                      f.write('---\n\n## 评论\n\n')
+                      for c in comments:
+                          f.write(f'**{c["author"]["login"]}** ({c["createdAt"]}):\n\n')
+                          f.write(c["body"].strip() + "\n\n---\n\n")
+
+                  f.write(f'\n> 🤖 自动同步自 [GitHub Discussion #{d["number"]}]({d["url"]})')
+                  f.write(' | 请勿在此编辑\n')
+
+          # Write _Sidebar.md for Gitee Wiki navigation
+          with open(out / "_Sidebar.md", "w", encoding="utf-8") as f:
+              f.write("# 💬 Discussions 镜像\n\n")
+              f.write("> 只读镜像 — 参与讨论请访问 ")
+              f.write("[GitHub Discussions](https://github.com/esphome-cloud/community/discussions)\n\n")
+              f.write("GitHub 访问困难？发邮件到 feedback@esphome.cloud\n\n")
+              f.write("---\n\n")
+
+              for slug in sorted(cats.keys()):
+                  cat = cats[slug]
+                  f.write(f"## {cat['name']}\n\n")
+                  for d in sorted(cat["items"], key=lambda x: x["createdAt"], reverse=True):
+                      filename = slugify(d["title"], d["number"])
+                      f.write(f"- [{d['title']}]({slug}/{filename})\n")
+                  f.write("\n")
+
+          print(f"Generated {len(discussions)} discussion page(s) across {len(cats)} categories.")
+          PYEOF
+
+      - name: Push to Gitee Wiki
+        env:
+          GIT_SSH_COMMAND: ssh -i ~/.ssh/gitee_mirror -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes
+        run: |
+          set -euo pipefail
+          WIKI_REMOTE="git@gitee.com:esphome-cloud/community.wiki.git"
+          WORK_DIR="/tmp/wiki-repo"
+
+          if git clone "$WIKI_REMOTE" "$WORK_DIR" 2>/dev/null; then
+            echo "Cloned existing wiki."
+          else
+            echo "Wiki repo not found — initializing new wiki."
+            mkdir -p "$WORK_DIR"
+            cd "$WORK_DIR"
+            git init
+            git remote add origin "$WIKI_REMOTE"
+          fi
+
+          cd "$WORK_DIR"
+
+          # Remove all previous discussion pages (clean sync handles deletions)
+          find . -name "*.md" ! -name "_Sidebar.md" -delete 2>/dev/null || true
+          find . -type d -empty -delete 2>/dev/null || true
+
+          # Copy generated pages
+          cp -r /tmp/wiki-pages/* .
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to wiki."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git commit -m "sync: discussions mirror $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            # Gitee wiki default branch is 'master'
+            git push origin master 2>/dev/null || git push --set-upstream origin master
+            echo "Wiki synced successfully."
+          fi
+
+      - name: Cleanup SSH key
+        if: always()
+        run: rm -f ~/.ssh/gitee_mirror
