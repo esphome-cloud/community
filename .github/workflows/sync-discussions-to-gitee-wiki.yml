@@ -200,6 +200,7 @@ jobs:
             mkdir -p "$WORK_DIR"
             git -C "$WORK_DIR" init
             git -C "$WORK_DIR" remote add origin "$WIKI_REMOTE"
+          fi
           cd "$WORK_DIR"
           echo "Working in: $(pwd)"
           echo "Git dir exists: $(test -d .git && echo YES || echo NO)"
